@@ -218,3 +218,24 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+*.db
+*.sqlite
+*.sqlite3
+data/
+*.jsonl
+*.log
+*.backup_*
+.pytest_cache/
+.vscode/
+node_modules/
+.next/
+
+.gitignore.atlas-temp
+.gitignore.local-backup

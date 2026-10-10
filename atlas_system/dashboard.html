@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ATLAS AI | Mission Control</title><style>
+:root{color-scheme:dark;font-family:Inter,Segoe UI,Arial,sans-serif;background:#0b1220;color:#eef4ff}
+*{box-sizing:border-box}body{margin:0}header{padding:30px max(24px,7vw);border-bottom:1px solid #27334b;background:#111c2f}
+small{color:#93a9c9;letter-spacing:.15em}h1{margin:8px 0;font-size:36px}h2{font-size:19px}
+main{max-width:1250px;margin:auto;padding:28px 24px}section{background:#111c2f;border:1px solid #283753;border-radius:14px;padding:22px;margin-bottom:20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}.stat{background:#192840;padding:20px;border-radius:10px}
+strong{font-size:25px;display:block;margin-top:6px}label{display:block;margin-bottom:8px;color:#aebfd8}
+select,button{background:#253b5a;color:white;border:1px solid #456083;padding:12px;border-radius:8px;font-size:15px}
+button{background:#2563eb;border-color:#2563eb;cursor:pointer}button:hover{background:#1d4ed8}button:disabled{opacity:.5}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#091321;border-radius:8px;padding:16px;max-height:390px;overflow:auto}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:end}.note{color:#aabbd5}.tag{color:#7dd3fc}
+</style></head><body><header><small>LOCAL SIMULATION · NO LIVE PAYMENTS</small><h1>ATLAS AI / Mission Control</h1><p class="note">Synthetic incident detection, explainable investigation, recovery proposals and human approval.</p></header>
+<main><div class="grid"><section class="stat">Incidents recorded<strong id="count">0</strong></section><section class="stat">Critical incidents<strong id="critical">0</strong></section><section class="stat">Pending actions<strong id="pending">0</strong></section></div>
+<section><h2>1. Generate synthetic incident</h2><div class="row"><div><label for="scenario">Scenario</label><select id="scenario"><option value="">Random</option><option value="healthy">Healthy</option><option value="provider_outage">Provider outage</option><option value="latency_spike">Latency spike</option><option value="retry_storm">Retry storm</option></select></div><button onclick="generate()">Generate & investigate</button></div></section>
+<section><h2>2. Incident investigation</h2><pre id="incident">Generate an incident to see evidence and investigation.</pre></section>
+<section><h2>3. Recovery simulation & human approval</h2><div class="row"><div><label for="strategy">Recovery strategy</label><select id="strategy"><option value="backup_provider">Backup provider</option><option value="bounded_retries">Bounded retries</option><option value="circuit_breaker">Circuit breaker</option></select></div><button onclick="propose()">Simulate & propose</button><button id="approve" onclick="approve()" disabled>Approve sandbox action</button></div><pre id="proposal">Select an incident first. No real systems will be changed.</pre></section>
+<section><h2>4. Recent incident history</h2><pre id="history">Loading...</pre></section>
+<p class="note">Demo limitations: deterministic rule-based investigation; counterfactual projections are illustrative, not calibrated. Future phases can integrate LangGraph, SimPy, databases and production-grade security.</p></main>
+<script>
+let current=null,pending=null;
+async function api(path,method='GET',data){let r=await fetch(path,{method,headers:{'Content-Type':'application/json'},body:data?JSON.stringify(data):undefined});let j=await r.json();if(!r.ok)throw Error(j.error||'Request failed');return j}
+function display(id,obj){document.getElementById(id).textContent=JSON.stringify(obj,null,2)}
+async function refresh(){let [inc,acts]=await Promise.all([api('/api/incidents'),api('/api/actions')]);document.getElementById('count').textContent=inc.length;document.getElementById('critical').textContent=inc.filter(x=>x.severity==='CRITICAL').length;let completed=new Set(acts.filter(x=>x.status==='SIMULATED_EXECUTION_COMPLETE').map(x=>x.action_id));document.getElementById('pending').textContent=acts.filter(x=>x.status==='PENDING_HUMAN_APPROVAL'&&!completed.has(x.action_id)).length;display('history',inc.slice(0,10))}
+async function generate(){try{current=await api('/api/incidents','POST',{scenario:document.getElementById('scenario').value||null});pending=null;document.getElementById('approve').disabled=true;display('incident',current);display('proposal','Select a strategy and click Simulate & propose');await refresh()}catch(e){alert(e.message)}}
+async function propose(){if(!current)return alert('Generate an incident first');try{pending=await api('/api/proposals','POST',{incident_id:current.incident_id,strategy:document.getElementById('strategy').value});display('proposal',pending);document.getElementById('approve').disabled=false;await refresh()}catch(e){alert(e.message)}}
+async function approve(){if(!pending)return;try{let result=await api('/api/approve','POST',{action_id:pending.action_id});display('proposal',result);pending=null;document.getElementById('approve').disabled=true;await refresh()}catch(e){alert(e.message)}}
+refresh().catch(e=>display('history',{error:e.message}));
+</script></body></html>
