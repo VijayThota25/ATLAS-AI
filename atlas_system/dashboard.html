@@ -1,3 +1,5 @@
+<!-- ATLAS_V06_EVALUATIONS -->
+<!-- ATLAS_V05_OBSERVABILITY -->
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ATLAS AI | Mission Control</title><style>
@@ -11,20 +13,174 @@ select,button{background:#253b5a;color:white;border:1px solid #456083;padding:12
 button{background:#2563eb;border-color:#2563eb;cursor:pointer}button:hover{background:#1d4ed8}button:disabled{opacity:.5}
 pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#091321;border-radius:8px;padding:16px;max-height:390px;overflow:auto}
 .row{display:flex;gap:12px;flex-wrap:wrap;align-items:end}.note{color:#aabbd5}.tag{color:#7dd3fc}
+
+
+/* ATLAS_V04_STRUCTURED_ADVISORY */
+#llm-report{display:grid;gap:14px;margin-top:16px}
+.ai-panel{background:#192840;border:1px solid #344968;border-radius:10px;padding:16px}
+.ai-panel h3{font-size:16px;margin:0 0 10px;color:#93c5fd}
+.ai-panel p{margin:0;line-height:1.55;white-space:pre-wrap}
+.ai-panel ul{margin:0;padding-left:22px;line-height:1.6}
+.ai-meta{color:#b8c9df;font-size:13px}
+
+
+/* ATLAS_V08_ANALYTICS */
+.analytics-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:16px 0}
+.analytics-stat{background:#192840;padding:16px;border-radius:9px}
+.analytics-stat b{font-size:22px;display:block;margin-top:6px}
+.analytics-chart{background:#091321;border-radius:10px;padding:12px;margin:12px 0}
+.analytics-chart svg{width:100%;height:auto;max-height:290px}
+.analytics-chart h3{font-size:15px;margin:0 0 8px;color:#93c5fd}
+
 </style></head><body><header><small>LOCAL SIMULATION · NO LIVE PAYMENTS</small><h1>ATLAS AI / Mission Control</h1><p class="note">Synthetic incident detection, explainable investigation, recovery proposals and human approval.</p></header>
 <main><div class="grid"><section class="stat">Incidents recorded<strong id="count">0</strong></section><section class="stat">Critical incidents<strong id="critical">0</strong></section><section class="stat">Pending actions<strong id="pending">0</strong></section></div>
 <section><h2>1. Generate synthetic incident</h2><div class="row"><div><label for="scenario">Scenario</label><select id="scenario"><option value="">Random</option><option value="healthy">Healthy</option><option value="provider_outage">Provider outage</option><option value="latency_spike">Latency spike</option><option value="retry_storm">Retry storm</option></select></div><button onclick="generate()">Generate & investigate</button></div></section>
 <section><h2>2. Incident investigation</h2><pre id="incident">Generate an incident to see evidence and investigation.</pre></section>
+<section><h2>Local AI advisory (optional)</h2><p class="note">Runs Llama 3.2 on your computer through Ollama. AI hypotheses are unverified and cannot authorize actions.</p><button id="llm-button" onclick="analyzeLocal()">Analyze incident with local Llama 3.2</button><div id="llm-report" aria-live="polite">Generate an incident first, then click Analyze.</div></section>
 <section><h2>3. Recovery simulation & human approval</h2><div class="row"><div><label for="strategy">Recovery strategy</label><select id="strategy"><option value="backup_provider">Backup provider</option><option value="bounded_retries">Bounded retries</option><option value="circuit_breaker">Circuit breaker</option></select></div><button onclick="propose()">Simulate & propose</button><button id="approve" onclick="approve()" disabled>Approve sandbox action</button></div><pre id="proposal">Select an incident first. No real systems will be changed.</pre></section>
-<section><h2>4. Recent incident history</h2><pre id="history">Loading...</pre></section>
-<p class="note">Demo limitations: deterministic rule-based investigation; counterfactual projections are illustrative, not calibrated. Future phases can integrate LangGraph, SimPy, databases and production-grade security.</p></main>
+<section><h2>4. Operational observability</h2><p class="note">SQLite audit mirror and measured operation durations (local demo).</p><button onclick="loadObservability()">Refresh metrics</button><pre id="observability">Click Refresh metrics to load operational statistics.</pre></section>
+<section><h2>5. AI evaluation & regression</h2><p class="note">Offline deterministic checks only. No Ollama request; no claim of factual accuracy.</p><button id="eval-run" onclick="runEvaluation()">Run regression suite</button> <button onclick="loadEvaluations()">Refresh evaluation history</button><pre id="evaluation">Click Run regression suite to evaluate the synthetic scenarios.</pre><pre id="evaluation-history">No evaluation history loaded.</pre></section>
+<section><h2>6. Live Llama 3.2 evaluation</h2><p class="note">Runs four local Ollama calls (may take several minutes). Heuristic safety and evidence checks only; not a factuality or hallucination score.</p><button id="live-eval-run" onclick="runLiveEvaluation()">Run live model evaluation</button><pre id="live-evaluation">No live model evaluation started.</pre></section>
+<section id="analytics-section"><h2>7. AI evaluation analytics</h2><p class="note">Historical results from SQLite. No model calls; pass rates are heuristic/deterministic checks, not factuality scores.</p><button id="analytics-refresh" onclick="loadAnalytics()">Refresh analytics</button><div id="analytics-summary" aria-live="polite">Click Refresh analytics to display saved results.</div><div id="analytics-charts"></div></section>
+<section id="reliability-section"><h2>8. Agent reliability &amp; failure recovery</h2><p class="note">Deterministic fault injection only. No Ollama calls or real actions. Recovery always requires human review.</p><div class="row"><div><label for="reliability-fault">Simulated fault</label><select id="reliability-fault"><option value="none">No fault</option><option value="transient_timeout">Transient timeout</option><option value="persistent_timeout">Persistent timeout</option><option value="malformed_response">Malformed model response</option><option value="tool_unavailable">Tool unavailable</option></select></div><button id="reliability-run" onclick="runReliability()">Simulate failure &amp; recovery</button><button id="reliability-tests" onclick="testReliability()">Run reliability regression</button></div><pre id="reliability-output">Choose a fault to simulate its recovery behavior.</pre><pre id="reliability-regression">No reliability regression run yet.</pre></section>
+<section id="workflow-section"><h2>9. End-to-end workflow trace (v1.0)</h2><p class="note">Read-only deterministic trace of detection, reasoning, recommendation, reliability and the human approval gate. Does not create incidents or execute actions.</p><div class="row"><div><label for="workflow-scenario">Synthetic scenario</label><select id="workflow-scenario"><option value="provider_outage">Provider outage</option><option value="healthy">Healthy</option><option value="latency_spike">Latency spike</option><option value="retry_storm">Retry storm</option></select></div><div><label for="workflow-fault">Fault injection</label><select id="workflow-fault"><option value="none">No fault</option><option value="transient_timeout">Transient timeout</option><option value="persistent_timeout">Persistent timeout</option><option value="malformed_response">Malformed response</option><option value="tool_unavailable">Tool unavailable</option></select></div><button id="workflow-run" onclick="runWorkflowTrace()">Trace workflow</button><button id="workflow-tests" onclick="runWorkflowTests()">Run workflow regression</button></div><div id="workflow-timeline" aria-live="polite">Choose a scenario and click Trace workflow.</div><pre id="workflow-regression">No workflow regression run yet.</pre></section>
+<section><h2>10. Recent incident history</h2><pre id="history">Loading...</pre></section>
+<p class="note">ATLAS v1.0: LangGraph coordinates deterministic investigation steps. Optional Llama 3.2 provides structured, unverified advisory reports. SimPy simulates synthetic timing events; Monte Carlo trials estimate synthetic recovery outcomes. No real LLM reasoning or calibrated payment-provider predictions. Sandbox only.</p></main>
 <script>
 let current=null,pending=null;
 async function api(path,method='GET',data){let r=await fetch(path,{method,headers:{'Content-Type':'application/json'},body:data?JSON.stringify(data):undefined});let j=await r.json();if(!r.ok)throw Error(j.error||'Request failed');return j}
 function display(id,obj){document.getElementById(id).textContent=JSON.stringify(obj,null,2)}
 async function refresh(){let [inc,acts]=await Promise.all([api('/api/incidents'),api('/api/actions')]);document.getElementById('count').textContent=inc.length;document.getElementById('critical').textContent=inc.filter(x=>x.severity==='CRITICAL').length;let completed=new Set(acts.filter(x=>x.status==='SIMULATED_EXECUTION_COMPLETE').map(x=>x.action_id));document.getElementById('pending').textContent=acts.filter(x=>x.status==='PENDING_HUMAN_APPROVAL'&&!completed.has(x.action_id)).length;display('history',inc.slice(0,10))}
-async function generate(){try{current=await api('/api/incidents','POST',{scenario:document.getElementById('scenario').value||null});pending=null;document.getElementById('approve').disabled=true;display('incident',current);display('proposal','Select a strategy and click Simulate & propose');await refresh()}catch(e){alert(e.message)}}
+async function generate(){try{current=await api('/api/incidents','POST',{scenario:document.getElementById('scenario').value||null});pending=null;document.getElementById('approve').disabled=true;document.getElementById('llm-report').textContent='Click Analyze to request a local AI advisory.';display('incident',current);display('proposal','Select a strategy and click Simulate & propose');await refresh()}catch(e){alert(e.message)}}
+async function analyzeLocal(){
+  if(!current)return alert('Generate an incident first');
+  const button=document.getElementById('llm-button');
+  button.disabled=true;
+  document.getElementById('llm-report').textContent='Analyzing locally (this can take a moment)...';
+  try{let result=await api('/api/llm-analysis','POST',{incident_id:current.incident_id});showStructuredAdvisory(result)}
+  catch(e){showStructuredAdvisory({error:e.message})}
+  finally{button.disabled=false}
+}
 async function propose(){if(!current)return alert('Generate an incident first');try{pending=await api('/api/proposals','POST',{incident_id:current.incident_id,strategy:document.getElementById('strategy').value});display('proposal',pending);document.getElementById('approve').disabled=false;await refresh()}catch(e){alert(e.message)}}
 async function approve(){if(!pending)return;try{let result=await api('/api/approve','POST',{action_id:pending.action_id});display('proposal',result);pending=null;document.getElementById('approve').disabled=true;await refresh()}catch(e){alert(e.message)}}
+// ATLAS_V07_LIVE_EVALUATION
+async function runLiveEvaluation(){
+ const b=document.getElementById('live-eval-run');b.disabled=true;
+ document.getElementById('live-evaluation').textContent='Running four local model evaluations. Please wait; this may take several minutes...';
+ try{display('live-evaluation',await api('/api/evaluations/live','POST',{}));await loadEvaluations()}
+ catch(e){display('live-evaluation',{error:e.message})}
+ finally{b.disabled=false}
+}
 refresh().catch(e=>display('history',{error:e.message}));
+async function loadObservability(){try{display('observability',await api('/api/observability'))}catch(e){display('observability',{error:e.message})}}
+
+// ATLAS_V06_EVALUATIONS
+async function loadEvaluations(){try{display('evaluation-history',await api('/api/evaluations'))}catch(e){display('evaluation-history',{error:e.message})}}
+async function runEvaluation(){
+ const b=document.getElementById('eval-run');b.disabled=true;
+ try{display('evaluation',await api('/api/evaluations/run','POST',{}));await loadEvaluations()}
+ catch(e){display('evaluation',{error:e.message})}
+ finally{b.disabled=false}
+}
+// ATLAS_V04_STRUCTURED_ADVISORY
+function addPanel(title, values) {
+  const panel=document.createElement('div');panel.className='ai-panel';
+  const heading=document.createElement('h3');heading.textContent=title;panel.appendChild(heading);
+  if(Array.isArray(values)) {
+    const ul=document.createElement('ul');
+    values.forEach(value=>{const li=document.createElement('li');li.textContent=String(value);ul.appendChild(li)});
+    panel.appendChild(ul);
+  } else {
+    const p=document.createElement('p');p.textContent=String(values);panel.appendChild(p);
+  }
+  return panel;
+}
+function showStructuredAdvisory(result){
+  const container=document.getElementById('llm-report');container.replaceChildren();
+  if(result.error){container.appendChild(addPanel('AI advisory unavailable',result.error));return;}
+  container.appendChild(addPanel('Hypothesis — unverified',result.hypothesis));
+  const m=result.observed_metrics;
+  container.appendChild(addPanel('Observed synthetic metrics',[
+    'Payment success rate: '+m.payment_success_rate+'%',
+    'Average latency: '+m.average_latency_ms+' ms',
+    'Failed transactions: '+m.failed_transactions
+  ]));
+  container.appendChild(addPanel('Evidence to verify',result.evidence_to_check));
+  container.appendChild(addPanel('Suggested next steps — advisory only',result.recommended_next_steps));
+  container.appendChild(addPanel('Limitations',result.limitations));
+  const evaluation=result.evaluation||{};
+  container.appendChild(addPanel('Automated structural checks',
+    (evaluation.passed?'Passed':'Not passed')+' — '+(evaluation.note||'No evaluation available')));
+  container.appendChild(addPanel('Safety notice',result.disclaimer));
+}
+
+
+// ATLAS_V08_ANALYTICS
+function analyticsNode(tag,text,cls){const el=document.createElement(tag);if(text!==null)el.textContent=String(text);if(cls)el.className=cls;return el}
+function analyticsChart(title,rows,key,valueKey,unit){
+ const wrap=analyticsNode('div',null,'analytics-chart');wrap.appendChild(analyticsNode('h3',title));
+ if(!rows.length){wrap.appendChild(analyticsNode('p','Not enough saved measurements yet.','note'));return wrap}
+ const width=700,height=Math.max(120,rows.length*37+28),left=155,right=65;
+ const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox',`0 0 ${width} ${height}`);svg.setAttribute('role','img');svg.setAttribute('aria-label',title);
+ const vals=rows.map(x=>Number(x[valueKey])||0),max=Math.max(1,...vals);
+ function t(x,y,value,anchor='start'){const e=document.createElementNS(svg.namespaceURI,'text');e.setAttribute('x',x);e.setAttribute('y',y);e.setAttribute('fill','#dbeafe');e.setAttribute('font-size','12');e.setAttribute('text-anchor',anchor);e.textContent=value;svg.appendChild(e)}
+ rows.forEach((r,i)=>{const y=18+i*37,v=vals[i];t(left-10,y+14,String(r[key]).slice(0,22),'end');const bar=document.createElementNS(svg.namespaceURI,'rect');bar.setAttribute('x',left);bar.setAttribute('y',y);bar.setAttribute('width',Math.max(0,(width-left-right)*v/max));bar.setAttribute('height',19);bar.setAttribute('rx',4);bar.setAttribute('fill','#3b82f6');svg.appendChild(bar);t(Math.min(width-3,left+8+(width-left-right)*v/max),y+14,`${v.toFixed(unit==='ms'?0:1)}${unit}`)});
+ wrap.appendChild(svg);return wrap;
+}
+async function loadAnalytics(){
+ const button=document.getElementById('analytics-refresh');button.disabled=true;
+ const summary=document.getElementById('analytics-summary'),charts=document.getElementById('analytics-charts');
+ summary.textContent='Loading saved evaluation reports...';charts.replaceChildren();
+ try{
+  const data=await api('/api/analytics');summary.replaceChildren();
+  const stats=analyticsNode('div',null,'analytics-stats');
+  const items=[['Saved runs',data.run_count],['Live runs',data.live_run_count],['Live scenario measurements',data.scenario_measurements.length]];
+  items.forEach(([label,value])=>{const tile=analyticsNode('div',null,'analytics-stat');tile.appendChild(analyticsNode('span',label));tile.appendChild(analyticsNode('b',value));stats.appendChild(tile)});summary.appendChild(stats);
+  const live=data.runs.filter(r=>r.suite.startsWith('v0.7-live'));
+  charts.appendChild(analyticsChart('Live evaluation pass rate by run',live.map(r=>({label:'#'+r.run_id,rate:r.pass_rate_pct??0})),'label','rate','%'));
+  charts.appendChild(analyticsChart('Mean scenario latency by live run',live.filter(r=>r.average_latency_ms!==undefined).map(r=>({label:'#'+r.run_id,latency:r.average_latency_ms})),'label','latency','ms'));
+  const recent=data.scenario_measurements.slice(-12).map(r=>({label:'#'+r.run_id+' '+r.scenario,latency:r.duration_ms??0}));
+  charts.appendChild(analyticsChart('Recent per-scenario response times',recent,'label','latency','ms'));
+  summary.appendChild(analyticsNode('p',data.limitations,'note'));
+  if(data.live_run_count<2)summary.appendChild(analyticsNode('p','Only one live evaluation run exists. A historical trend requires more runs.','note'));
+ }catch(err){summary.textContent='Analytics unavailable: '+err.message}
+ finally{button.disabled=false}
+}
+
+
+// ATLAS_V09_RELIABILITY
+async function runReliability(){
+ const b=document.getElementById('reliability-run');b.disabled=true;
+ try{display('reliability-output',await api('/api/reliability/simulate','POST',{fault:document.getElementById('reliability-fault').value}));}
+ catch(e){display('reliability-output',{error:e.message});}
+ finally{b.disabled=false;}
+}
+async function testReliability(){
+ const b=document.getElementById('reliability-tests');b.disabled=true;
+ try{display('reliability-regression',await api('/api/reliability/regression'));}
+ catch(e){display('reliability-regression',{error:e.message});}
+ finally{b.disabled=false;}
+}
+
+
+// ATLAS_V10_WORKFLOW
+async function runWorkflowTrace(){
+ const b=document.getElementById('workflow-run');b.disabled=true;
+ const target=document.getElementById('workflow-timeline');target.textContent='Building read-only synthetic trace...';
+ try{
+  const data=await api('/api/workflow/trace','POST',{scenario:document.getElementById('workflow-scenario').value,fault:document.getElementById('workflow-fault').value});
+  target.replaceChildren();
+  const summary=document.createElement('p');summary.textContent='Outcome: '+data.reliability_outcome+' | Human approval required: '+data.requires_human_approval+' | Action executed: '+data.action_executed;target.appendChild(summary);
+  for(const step of data.steps){const panel=document.createElement('div');panel.className='ai-panel';panel.style.marginBottom='10px';const title=document.createElement('h3');title.textContent=step.step+'. '+step.stage+' — '+step.status;panel.appendChild(title);const detail=document.createElement('pre');detail.textContent=JSON.stringify(step.detail,null,2);panel.appendChild(detail);target.appendChild(panel)}
+  const note=document.createElement('p');note.className='note';note.textContent=data.limitations;target.appendChild(note);
+ }catch(e){target.textContent='Workflow trace error: '+e.message}
+ finally{b.disabled=false}
+}
+async function runWorkflowTests(){
+ const b=document.getElementById('workflow-tests');b.disabled=true;
+ try{display('workflow-regression',await api('/api/workflow/regression'))}
+ catch(e){display('workflow-regression',{error:e.message})}
+ finally{b.disabled=false}
+}
+
 </script></body></html>

@@ -1,3 +1,5 @@
+# ATLAS_V05_OBSERVABILITY
+# ATLAS_V02_INTEGRATION
 """Local-first synthetic payments investigation engine. No real payments or APIs."""
 import json
 import random
@@ -59,6 +61,8 @@ def investigate(name):
 def append_record(path, record):
     DATA.mkdir(exist_ok=True, parents=True)
     with path.open('a', encoding='utf-8') as f: f.write(json.dumps(record) + '\n')
+    from atlas_store import mirror
+    mirror('incident' if path == HISTORY else 'action', record)
 
 def read_records(path, limit=50):
     if not path.exists(): return []
@@ -68,6 +72,10 @@ def read_records(path, limit=50):
 
 def create_incident(name=None):
     incident = investigate(name or random.choice(list(SCENARIOS)))
+    from agent_pipeline import investigate_agents
+    analysis = investigate_agents(incident)
+    incident['agent_investigation'] = analysis
+    incident['analysis_type'] = analysis['orchestrator']
     append_record(HISTORY, incident)
     return incident
 
@@ -83,7 +91,8 @@ def simulate_recovery(incident, strategy):
             'disclaimer': 'Illustrative synthetic estimate, not a calibrated simulation'}
 
 def propose_action(incident, strategy):
-    simulation = simulate_recovery(incident, strategy)
+    from digital_twin import experiment
+    simulation = experiment(incident, strategy, trials=1000, seed=42)
     proposal = {'action_id': str(uuid.uuid4()), 'incident_id': incident['incident_id'],
                 'strategy': strategy, 'status': 'PENDING_HUMAN_APPROVAL',
                 'simulation': simulation, 'environment': 'SIMULATION'}
