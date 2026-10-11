@@ -47,7 +47,37 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#091321;border-radius
 <!-- ATLAS_V12_ANALYTICS -->
 <section id="workflow-analytics-section"><h2>10. Workflow observability &amp; incident intelligence (v1.2)</h2><p class="note">Read-only statistics from all saved synthetic workflow traces. No real payment operations or recovery execution.</p><button id="workflow-analytics-refresh" onclick="loadWorkflowAnalytics()">Refresh workflow analytics</button><div id="workflow-analytics-summary" aria-live="polite">Click Refresh workflow analytics to load saved-trace metrics.</div><div id="workflow-analytics-distributions"></div></section>
 <section id="root-cause-section"><h2>11. Explainable root cause analysis (v1.3)</h2><p class="note">Deterministic hypotheses from fixed synthetic metrics. No causal proof, real payment access, live LLM, or recovery execution.</p><div class="row"><div><label for="rca-scenario">Synthetic scenario</label><select id="rca-scenario"><option value="provider_outage">Provider outage</option><option value="healthy">Healthy</option><option value="latency_spike">Latency spike</option><option value="retry_storm">Retry storm</option></select></div><button id="rca-run" onclick="runRootCause()">Analyze synthetic incident</button></div><pre id="rca-output" aria-live="polite">Choose a scenario and click Analyze synthetic incident.</pre></section>
-<section><h2>11. Recent incident history</h2><pre id="history">Loading...</pre></section>
+
+<!-- ATLAS_V14_WORKBENCH -->
+<section id="comparison-section">
+<h2>12. Incident Investigation Workbench (v1.4)</h2>
+<p class="note">Compare fixed synthetic scenarios. Read-only investigation; no real payments or recovery execution.</p>
+<div class="row">
+<div>
+<label for="compare-a">Incident A</label>
+<select id="compare-a">
+<option value="provider_outage">Provider outage</option>
+<option value="healthy">Healthy</option>
+<option value="latency_spike">Latency spike</option>
+<option value="retry_storm">Retry storm</option>
+</select>
+</div>
+<div>
+<label for="compare-b">Incident B</label>
+<select id="compare-b">
+<option value="retry_storm">Retry storm</option>
+<option value="provider_outage">Provider outage</option>
+<option value="healthy">Healthy</option>
+<option value="latency_spike">Latency spike</option>
+</select>
+</div>
+<button id="compare-run" onclick="runComparison()">Compare incidents</button>
+<button id="compare-download" onclick="downloadComparison()" disabled>Download JSON report</button>
+</div>
+<pre id="comparison-output" aria-live="polite">Select two scenarios and click Compare incidents.</pre>
+</section>
+
+<section><h2>13. Recent incident history</h2><pre id="history">Loading...</pre></section>
 <p class="note">ATLAS v1.0: LangGraph coordinates deterministic investigation steps. Optional Llama 3.2 provides structured, unverified advisory reports. SimPy simulates synthetic timing events; Monte Carlo trials estimate synthetic recovery outcomes. No real LLM reasoning or calibrated payment-provider predictions. Sandbox only.</p></main>
 <script>
 let current=null,pending=null;
@@ -235,4 +265,47 @@ async function runRootCause(){
  }catch(e){display('rca-output',{error:e.message})}
  finally{b.disabled=false}
 }
+
+// ATLAS_V14_WORKBENCH
+let comparisonReport = null;
+
+async function runComparison(){
+ const button = document.getElementById('compare-run');
+ const download = document.getElementById('compare-download');
+ button.disabled = true;
+ download.disabled = true;
+ comparisonReport = null;
+
+ try {
+  const result = await api('/api/incidents/compare', 'POST', {
+   scenario_a: document.getElementById('compare-a').value,
+   scenario_b: document.getElementById('compare-b').value
+  });
+
+  comparisonReport = result;
+  display('comparison-output', result);
+  download.disabled = false;
+ } catch(e) {
+  display('comparison-output', {error: e.message});
+ } finally {
+  button.disabled = false;
+ }
+}
+
+function downloadComparison(){
+ if(!comparisonReport) return;
+
+ const json = JSON.stringify(comparisonReport, null, 2);
+ const blob = new Blob([json], {type: 'application/json'});
+ const url = URL.createObjectURL(blob);
+ const link = document.createElement('a');
+
+ link.href = url;
+ link.download = 'atlas-v14-synthetic-investigation.json';
+ document.body.appendChild(link);
+ link.click();
+ link.remove();
+ URL.revokeObjectURL(url);
+}
+
 </script></body></html>

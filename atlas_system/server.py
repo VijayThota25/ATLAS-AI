@@ -11,6 +11,7 @@ from live_evaluation import run_live  # ATLAS_V07_LIVE_EVALUATION
 from evaluation_analytics import summarize  # ATLAS_V08_ANALYTICS
 from reliability_lab import simulate as reliability_simulate, regression as reliability_regression  # ATLAS_V09_RELIABILITY
 from root_cause import analyze as root_cause_analyze  # ATLAS_V13_ROOT_CAUSE
+from incident_comparison import compare_incidents  # ATLAS_V14_COMPARISON
 from workflow_analytics import summarize_workflows  # ATLAS_V12_ANALYTICS
 from workflow_trace import trace as workflow_trace, regression as workflow_regression  # ATLAS_V10_WORKFLOW
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -54,6 +55,11 @@ class Handler(BaseHTTPRequestHandler):
             if length > 10000: return self.respond(413, {'error': 'Request too large'})
             payload = json.loads(self.rfile.read(length) or b'{}')
             path = urlparse(self.path).path
+            if path == '/api/incidents/compare':
+                return self.respond(200, compare_incidents(
+                    payload.get('scenario_a', 'provider_outage'),
+                    payload.get('scenario_b', 'retry_storm')
+                ))
             if path == '/api/root-cause/analyze':
                 return self.respond(200, root_cause_analyze(payload.get('scenario', 'provider_outage')))
             if path == '/api/workflow/trace':
