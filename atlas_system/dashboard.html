@@ -46,6 +46,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#091321;border-radius
 <section id="workflow-section"><h2>9. End-to-end workflow trace &amp; history (v1.1)</h2><p class="note">Read-only deterministic trace of detection, reasoning, recommendation, reliability and the human approval gate. Does not create incidents or execute actions.</p><div class="row"><div><label for="workflow-scenario">Synthetic scenario</label><select id="workflow-scenario"><option value="provider_outage">Provider outage</option><option value="healthy">Healthy</option><option value="latency_spike">Latency spike</option><option value="retry_storm">Retry storm</option></select></div><div><label for="workflow-fault">Fault injection</label><select id="workflow-fault"><option value="none">No fault</option><option value="transient_timeout">Transient timeout</option><option value="persistent_timeout">Persistent timeout</option><option value="malformed_response">Malformed response</option><option value="tool_unavailable">Tool unavailable</option></select></div><button id="workflow-run" onclick="runWorkflowTrace()">Trace workflow</button><button id="workflow-save" onclick="saveWorkflowTrace()">Save synthetic trace</button><button id="workflow-history-btn" onclick="loadWorkflowHistory()">View saved traces</button><button id="workflow-tests" onclick="runWorkflowTests()">Run workflow regression</button></div><div id="workflow-timeline" aria-live="polite">Choose a scenario and click Trace workflow.</div><pre id="workflow-regression">No workflow regression run yet.</pre><pre id="workflow-history">No saved traces loaded.</pre></section>
 <!-- ATLAS_V12_ANALYTICS -->
 <section id="workflow-analytics-section"><h2>10. Workflow observability &amp; incident intelligence (v1.2)</h2><p class="note">Read-only statistics from all saved synthetic workflow traces. No real payment operations or recovery execution.</p><button id="workflow-analytics-refresh" onclick="loadWorkflowAnalytics()">Refresh workflow analytics</button><div id="workflow-analytics-summary" aria-live="polite">Click Refresh workflow analytics to load saved-trace metrics.</div><div id="workflow-analytics-distributions"></div></section>
+<section id="root-cause-section"><h2>11. Explainable root cause analysis (v1.3)</h2><p class="note">Deterministic hypotheses from fixed synthetic metrics. No causal proof, real payment access, live LLM, or recovery execution.</p><div class="row"><div><label for="rca-scenario">Synthetic scenario</label><select id="rca-scenario"><option value="provider_outage">Provider outage</option><option value="healthy">Healthy</option><option value="latency_spike">Latency spike</option><option value="retry_storm">Retry storm</option></select></div><button id="rca-run" onclick="runRootCause()">Analyze synthetic incident</button></div><pre id="rca-output" aria-live="polite">Choose a scenario and click Analyze synthetic incident.</pre></section>
 <section><h2>11. Recent incident history</h2><pre id="history">Loading...</pre></section>
 <p class="note">ATLAS v1.0: LangGraph coordinates deterministic investigation steps. Optional Llama 3.2 provides structured, unverified advisory reports. SimPy simulates synthetic timing events; Monte Carlo trials estimate synthetic recovery outcomes. No real LLM reasoning or calibrated payment-provider predictions. Sandbox only.</p></main>
 <script>
@@ -222,6 +223,16 @@ async function loadWorkflowAnalytics(){
    distributions.appendChild(group);
   }
  }catch(e){summary.textContent='Analytics error: '+e.message;distributions.replaceChildren()}
+ finally{b.disabled=false}
+}
+
+// ATLAS_V13_ROOT_CAUSE
+async function runRootCause(){
+ const b=document.getElementById('rca-run');b.disabled=true;
+ try{
+  const result=await api('/api/root-cause/analyze','POST',{scenario:document.getElementById('rca-scenario').value});
+  display('rca-output',result);
+ }catch(e){display('rca-output',{error:e.message})}
  finally{b.disabled=false}
 }
 </script></body></html>
