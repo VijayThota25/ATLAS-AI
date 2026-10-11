@@ -5,7 +5,7 @@
 """Dependency-free HTTP API and local dashboard."""
 import json
 import time
-from atlas_store import import_history, overview, record_operation
+from atlas_store import import_history, overview, record_operation, save_workflow_trace, workflow_history  # ATLAS_V11_PERSISTENCE
 from evaluation_suite import run_and_record, history as evaluation_history
 from live_evaluation import run_live  # ATLAS_V07_LIVE_EVALUATION
 from evaluation_analytics import summarize  # ATLAS_V08_ANALYTICS
@@ -34,7 +34,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header('Content-Length', str(len(body)))
             self.end_headers()
             self.wfile.write(body)
-        elif path == '/api/health': self.respond(200, {'status': 'ok', 'mode': 'local_simulation', 'version': '1.0', 'investigation': 'LangGraph', 'recovery': 'SimPy', 'local_llm': 'Ollama optional structured advisory'})
+        elif path == '/api/health': self.respond(200, {'status': 'ok', 'mode': 'local_simulation', 'version': '1.1', 'investigation': 'LangGraph', 'recovery': 'SimPy', 'local_llm': 'Ollama optional structured advisory'})
         elif path == '/api/scenarios': self.respond(200, list(SCENARIOS))
         elif path == '/api/incidents': self.respond(200, read_records(HISTORY))
         elif path == '/api/actions': self.respond(200, read_records(ACTIONS))
@@ -43,6 +43,7 @@ class Handler(BaseHTTPRequestHandler):
         elif path == '/api/analytics': self.respond(200, summarize())
         elif path == '/api/reliability/regression': self.respond(200, reliability_regression())
         elif path == '/api/workflow/regression': self.respond(200, workflow_regression())
+        elif path == '/api/workflow/history': self.respond(200, workflow_history())
         else: self.respond(404, {'error': 'Not found'})
     def do_POST(self):
         try:
@@ -52,6 +53,9 @@ class Handler(BaseHTTPRequestHandler):
             path = urlparse(self.path).path
             if path == '/api/workflow/trace':
                 return self.respond(200, workflow_trace(payload.get('scenario', 'provider_outage'), payload.get('fault', 'none')))
+            if path == '/api/workflow/trace/save':
+                result = workflow_trace(payload.get('scenario', 'provider_outage'), payload.get('fault', 'none'))
+                return self.respond(201, save_workflow_trace(result))
             if path == '/api/reliability/simulate':
                 return self.respond(200, reliability_simulate(payload.get('fault', 'none')))
             if path == '/api/evaluations/live':
