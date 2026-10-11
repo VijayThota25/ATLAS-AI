@@ -10,6 +10,7 @@ from evaluation_suite import run_and_record, history as evaluation_history
 from live_evaluation import run_live  # ATLAS_V07_LIVE_EVALUATION
 from evaluation_analytics import summarize  # ATLAS_V08_ANALYTICS
 from reliability_lab import simulate as reliability_simulate, regression as reliability_regression  # ATLAS_V09_RELIABILITY
+from workflow_analytics import summarize_workflows  # ATLAS_V12_ANALYTICS
 from workflow_trace import trace as workflow_trace, regression as workflow_regression  # ATLAS_V10_WORKFLOW
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -44,6 +45,7 @@ class Handler(BaseHTTPRequestHandler):
         elif path == '/api/reliability/regression': self.respond(200, reliability_regression())
         elif path == '/api/workflow/regression': self.respond(200, workflow_regression())
         elif path == '/api/workflow/history': self.respond(200, workflow_history())
+        elif path == '/api/workflow/analytics': self.respond(200, summarize_workflows())
         else: self.respond(404, {'error': 'Not found'})
     def do_POST(self):
         try:

@@ -44,7 +44,9 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#091321;border-radius
 <section id="analytics-section"><h2>7. AI evaluation analytics</h2><p class="note">Historical results from SQLite. No model calls; pass rates are heuristic/deterministic checks, not factuality scores.</p><button id="analytics-refresh" onclick="loadAnalytics()">Refresh analytics</button><div id="analytics-summary" aria-live="polite">Click Refresh analytics to display saved results.</div><div id="analytics-charts"></div></section>
 <section id="reliability-section"><h2>8. Agent reliability &amp; failure recovery</h2><p class="note">Deterministic fault injection only. No Ollama calls or real actions. Recovery always requires human review.</p><div class="row"><div><label for="reliability-fault">Simulated fault</label><select id="reliability-fault"><option value="none">No fault</option><option value="transient_timeout">Transient timeout</option><option value="persistent_timeout">Persistent timeout</option><option value="malformed_response">Malformed model response</option><option value="tool_unavailable">Tool unavailable</option></select></div><button id="reliability-run" onclick="runReliability()">Simulate failure &amp; recovery</button><button id="reliability-tests" onclick="testReliability()">Run reliability regression</button></div><pre id="reliability-output">Choose a fault to simulate its recovery behavior.</pre><pre id="reliability-regression">No reliability regression run yet.</pre></section>
 <section id="workflow-section"><h2>9. End-to-end workflow trace &amp; history (v1.1)</h2><p class="note">Read-only deterministic trace of detection, reasoning, recommendation, reliability and the human approval gate. Does not create incidents or execute actions.</p><div class="row"><div><label for="workflow-scenario">Synthetic scenario</label><select id="workflow-scenario"><option value="provider_outage">Provider outage</option><option value="healthy">Healthy</option><option value="latency_spike">Latency spike</option><option value="retry_storm">Retry storm</option></select></div><div><label for="workflow-fault">Fault injection</label><select id="workflow-fault"><option value="none">No fault</option><option value="transient_timeout">Transient timeout</option><option value="persistent_timeout">Persistent timeout</option><option value="malformed_response">Malformed response</option><option value="tool_unavailable">Tool unavailable</option></select></div><button id="workflow-run" onclick="runWorkflowTrace()">Trace workflow</button><button id="workflow-save" onclick="saveWorkflowTrace()">Save synthetic trace</button><button id="workflow-history-btn" onclick="loadWorkflowHistory()">View saved traces</button><button id="workflow-tests" onclick="runWorkflowTests()">Run workflow regression</button></div><div id="workflow-timeline" aria-live="polite">Choose a scenario and click Trace workflow.</div><pre id="workflow-regression">No workflow regression run yet.</pre><pre id="workflow-history">No saved traces loaded.</pre></section>
-<section><h2>10. Recent incident history</h2><pre id="history">Loading...</pre></section>
+<!-- ATLAS_V12_ANALYTICS -->
+<section id="workflow-analytics-section"><h2>10. Workflow observability &amp; incident intelligence (v1.2)</h2><p class="note">Read-only statistics from all saved synthetic workflow traces. No real payment operations or recovery execution.</p><button id="workflow-analytics-refresh" onclick="loadWorkflowAnalytics()">Refresh workflow analytics</button><div id="workflow-analytics-summary" aria-live="polite">Click Refresh workflow analytics to load saved-trace metrics.</div><div id="workflow-analytics-distributions"></div></section>
+<section><h2>11. Recent incident history</h2><pre id="history">Loading...</pre></section>
 <p class="note">ATLAS v1.0: LangGraph coordinates deterministic investigation steps. Optional Llama 3.2 provides structured, unverified advisory reports. SimPy simulates synthetic timing events; Monte Carlo trials estimate synthetic recovery outcomes. No real LLM reasoning or calibrated payment-provider predictions. Sandbox only.</p></main>
 <script>
 let current=null,pending=null;
@@ -193,5 +195,33 @@ async function loadWorkflowHistory(){
  const b=document.getElementById('workflow-history-btn');b.disabled=true;
  try{display('workflow-history',await api('/api/workflow/history'))}
  catch(e){display('workflow-history',{error:e.message})}finally{b.disabled=false}
+}
+
+// ATLAS_V12_ANALYTICS
+async function loadWorkflowAnalytics(){
+ const b=document.getElementById('workflow-analytics-refresh');
+ const summary=document.getElementById('workflow-analytics-summary');
+ const distributions=document.getElementById('workflow-analytics-distributions');
+ b.disabled=true;
+ try{
+  const result=await api('/api/workflow/analytics');
+  summary.textContent='Saved synthetic traces: '+result.total_traces+' | Approval required: '+result.safety.human_approval_required_count+' | No action executed: '+result.safety.no_action_executed_count+' | Safety anomalies: '+result.safety.anomaly_count;
+  distributions.replaceChildren();
+  for(const [label,key] of [['Scenario','by_scenario'],['Fault','by_fault'],['Severity','by_severity'],['Reliability outcome','by_reliability_outcome'],['UTC day','by_utc_day']]){
+   const group=document.createElement('div');
+   const title=document.createElement('h3');title.textContent=label;group.appendChild(title);
+   const entries=Object.entries(result[key]);
+   if(!entries.length){const empty=document.createElement('p');empty.textContent='No saved traces yet.';group.appendChild(empty)}
+   for(const [name,count] of entries){
+    const line=document.createElement('div');
+    line.textContent=name+': '+count+' ';
+    const bar=document.createElement('progress');bar.value=count;bar.max=Math.max(result.total_traces,1);
+    bar.setAttribute('aria-label',label+' '+name+' '+count+' of '+result.total_traces);
+    line.appendChild(bar);group.appendChild(line);
+   }
+   distributions.appendChild(group);
+  }
+ }catch(e){summary.textContent='Analytics error: '+e.message;distributions.replaceChildren()}
+ finally{b.disabled=false}
 }
 </script></body></html>
