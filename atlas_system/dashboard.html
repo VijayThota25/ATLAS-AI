@@ -77,7 +77,29 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#091321;border-radius
 <pre id="comparison-output" aria-live="polite">Select two scenarios and click Compare incidents.</pre>
 </section>
 
-<section><h2>13. Recent incident history</h2><pre id="history">Loading...</pre></section>
+<!-- ATLAS_V15_REPORT_EVALUATION -->
+<section id="report-evaluation-section">
+<h2>13. Investigation Report Quality Evaluation (v1.5)</h2>
+<p class="note">
+Seven deterministic checks for report structure, metric consistency,
+evidence completeness, and read-only safeguards.
+Passing does not establish root-cause accuracy or causal proof.
+</p>
+<div class="row">
+<button id="report-evaluate-run" onclick="runReportEvaluation()">
+Evaluate latest comparison
+</button>
+<button id="report-evaluate-download"
+onclick="downloadReportEvaluation()" disabled>
+Download evaluation JSON
+</button>
+</div>
+<pre id="report-evaluation-output" aria-live="polite">
+Compare two synthetic incidents first, then evaluate the report.
+</pre>
+</section>
+
+<section><h2>14. Recent incident history</h2><pre id="history">Loading...</pre></section>
 <p class="note">ATLAS v1.0: LangGraph coordinates deterministic investigation steps. Optional Llama 3.2 provides structured, unverified advisory reports. SimPy simulates synthetic timing events; Monte Carlo trials estimate synthetic recovery outcomes. No real LLM reasoning or calibrated payment-provider predictions. Sandbox only.</p></main>
 <script>
 let current=null,pending=null;
@@ -276,6 +298,12 @@ async function runComparison(){
  download.disabled = true;
  comparisonReport = null;
 
+ // ATLAS_V15_CLEAR_STALE_EVALUATION
+ reportEvaluation = null;
+ document.getElementById('report-evaluate-download').disabled = true;
+ document.getElementById('report-evaluation-output').textContent =
+  'Comparison changed. Evaluate the latest report again.';
+
  try {
   const result = await api('/api/incidents/compare', 'POST', {
    scenario_a: document.getElementById('compare-a').value,
@@ -302,6 +330,59 @@ function downloadComparison(){
 
  link.href = url;
  link.download = 'atlas-v14-synthetic-investigation.json';
+ document.body.appendChild(link);
+ link.click();
+ link.remove();
+ URL.revokeObjectURL(url);
+}
+
+
+// ATLAS_V15_REPORT_EVALUATION
+let reportEvaluation = null;
+
+async function runReportEvaluation(){
+ const button = document.getElementById('report-evaluate-run');
+ const download = document.getElementById('report-evaluate-download');
+ const output = document.getElementById('report-evaluation-output');
+
+ if(!comparisonReport){
+  output.textContent =
+   'No comparison report available. Run Compare incidents first.';
+  download.disabled = true;
+  reportEvaluation = null;
+  return;
+ }
+
+ button.disabled = true;
+ download.disabled = true;
+ reportEvaluation = null;
+ output.textContent = 'Evaluating synthetic investigation report...';
+
+ try {
+  const result = await api(
+   '/api/reports/evaluate', 'POST', comparisonReport
+  );
+
+  reportEvaluation = result;
+  display('report-evaluation-output', result);
+  download.disabled = false;
+ } catch(e){
+  output.textContent = 'Evaluation failed: ' + e.message;
+ } finally {
+  button.disabled = false;
+ }
+}
+
+function downloadReportEvaluation(){
+ if(!reportEvaluation) return;
+
+ const json = JSON.stringify(reportEvaluation, null, 2);
+ const blob = new Blob([json], {type: 'application/json'});
+ const url = URL.createObjectURL(blob);
+ const link = document.createElement('a');
+
+ link.href = url;
+ link.download = 'atlas-v15-report-evaluation.json';
  document.body.appendChild(link);
  link.click();
  link.remove();
