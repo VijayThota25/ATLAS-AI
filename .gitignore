@@ -242,3 +242,15 @@ node_modules/
 
 # ATLAS AI local backups
 atlas_backups/
+
+# ATLAS AI historical development artifacts
+*.bak
+atlas_*upgrade*.py
+atlas_upgrade.py
+atlas_integrate.py
+atlas_ollama_integrate.py
+atlas_system/install_v*.py
+generate_readme_v17.py
+generate_technical_readme_v17.py
+
+atlas_v09_dashboard_fix.py
