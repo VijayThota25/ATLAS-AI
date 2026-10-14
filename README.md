@@ -6,6 +6,8 @@ ATLAS AI is a local-first Python prototype for investigating synthetic payment i
 
 **Current release:** v1.6
 
+[View System Architecture](docs/architecture.md)
+
 ## Architecture
 
 Synthetic Payment Scenarios
