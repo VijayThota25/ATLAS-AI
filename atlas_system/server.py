@@ -12,6 +12,7 @@ from evaluation_analytics import summarize  # ATLAS_V08_ANALYTICS
 from reliability_lab import simulate as reliability_simulate, regression as reliability_regression  # ATLAS_V09_RELIABILITY
 from root_cause import analyze as root_cause_analyze  # ATLAS_V13_ROOT_CAUSE
 from report_evaluator import evaluate_report  # ATLAS_V15_REPORT_EVALUATOR
+from investigation_archive import save_investigation, investigation_history, get_investigation  # ATLAS_V16_ARCHIVE
 from incident_comparison import compare_incidents  # ATLAS_V14_COMPARISON
 from workflow_analytics import summarize_workflows  # ATLAS_V12_ANALYTICS
 from workflow_trace import trace as workflow_trace, regression as workflow_regression  # ATLAS_V10_WORKFLOW
@@ -38,7 +39,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header('Content-Length', str(len(body)))
             self.end_headers()
             self.wfile.write(body)
-        elif path == '/api/health': self.respond(200, {'status': 'ok', 'mode': 'local_simulation', 'version': '1.5', 'investigation': 'LangGraph', 'recovery': 'SimPy', 'local_llm': 'Ollama optional structured advisory'})
+        elif path == '/api/health': self.respond(200, {'status': 'ok', 'mode': 'local_simulation', 'version': '1.6', 'investigation': 'LangGraph', 'recovery': 'SimPy', 'local_llm': 'Ollama optional structured advisory'})
         elif path == '/api/scenarios': self.respond(200, list(SCENARIOS))
         elif path == '/api/incidents': self.respond(200, read_records(HISTORY))
         elif path == '/api/actions': self.respond(200, read_records(ACTIONS))
@@ -48,6 +49,14 @@ class Handler(BaseHTTPRequestHandler):
         elif path == '/api/reliability/regression': self.respond(200, reliability_regression())
         elif path == '/api/workflow/regression': self.respond(200, workflow_regression())
         elif path == '/api/workflow/history': self.respond(200, workflow_history())
+        elif path == '/api/investigations/history':
+            self.respond(200, investigation_history())
+        elif path.startswith('/api/investigations/'):
+            report_id = path.removeprefix('/api/investigations/')
+            if not report_id:
+                return self.respond(400, {'error': 'Report ID required'})
+            record = get_investigation(report_id)
+            self.respond(200, record) if record else self.respond(404, {'error': 'Investigation not found'})
         elif path == '/api/workflow/analytics': self.respond(200, summarize_workflows())
         else: self.respond(404, {'error': 'Not found'})
     def do_POST(self):
@@ -56,6 +65,8 @@ class Handler(BaseHTTPRequestHandler):
             if length > 10000: return self.respond(413, {'error': 'Request too large'})
             payload = json.loads(self.rfile.read(length) or b'{}')
             path = urlparse(self.path).path
+            if path == '/api/investigations/save':
+                return self.respond(201, save_investigation(payload))
             if path == '/api/reports/evaluate':
                 return self.respond(200, evaluate_report(payload))
             if path == '/api/incidents/compare':
