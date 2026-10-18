@@ -1,4 +1,6 @@
-
+from contextlib import closing
+import json
+import sqlite3
 import tempfile
 import unittest
 from pathlib import Path
@@ -83,6 +85,33 @@ class TestArchiveIntegrity(unittest.TestCase):
 
         # Invalid reports must never reach the archive.
         self.assertEqual(investigation_history(), [])
+
+    def test_detects_modified_stored_report(self):
+        comparison = compare_incidents("provider_outage", "healthy")
+        saved = save_investigation(comparison)
+
+        # Modify only the temporary test database.
+        with closing(sqlite3.connect(atlas_store.DB)) as db, db:
+            row = db.execute(
+                "SELECT payload FROM investigation_reports WHERE report_id = ?",
+                (saved["report_id"],),
+            ).fetchone()
+
+            tampered = json.loads(row[0])
+            tampered["evaluation_status"] = "FAIL"
+
+            db.execute(
+                "UPDATE investigation_reports SET payload = ? WHERE report_id = ?",
+                (json.dumps(tampered), saved["report_id"]),
+            )
+
+                # Future integrity verification must reject modified records.
+        try:
+            get_investigation(saved["report_id"])
+        except ValueError:
+            pass
+        else:
+            self.fail("Modified stored report was not rejected")
 
 if __name__ == "__main__":
     unittest.main()

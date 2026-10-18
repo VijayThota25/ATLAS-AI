@@ -1,5 +1,6 @@
 """ATLAS v1.6: explicit local archive for synthetic investigations."""
 
+import hashlib
 import json
 import sqlite3
 import uuid
@@ -11,6 +12,26 @@ from incident_comparison import compare_incidents
 from report_evaluator import evaluate_report
 
 
+def _payload_digest(payload):
+    """Compute a deterministic SHA-256 digest for a stored report."""
+    encoded = json.dumps(
+        payload, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _verify_payload(payload, expected_digest):
+    """Reject a stored report whose contents have changed."""
+    if expected_digest is None:
+        return payload  # Legacy v1.6 record without a digest.
+
+    if _payload_digest(payload) != expected_digest:
+        raise ValueError("Archived investigation integrity check failed")
+
+    return payload
+
+
+
 def _create_table(db):
     db.execute("""
         CREATE TABLE IF NOT EXISTS investigation_reports (
@@ -20,9 +41,20 @@ def _create_table(db):
             scenario_b TEXT NOT NULL,
             evaluation_status TEXT NOT NULL,
             payload TEXT NOT NULL,
+            payload_sha256 TEXT,
             created_at TEXT NOT NULL
         )
     """)
+    columns = {
+        row[1] for row in db.execute(
+            "PRAGMA table_info(investigation_reports)"
+        )
+    }
+    if "payload_sha256" not in columns:
+        db.execute(
+            "ALTER TABLE investigation_reports "
+            "ADD COLUMN payload_sha256 TEXT"
+        )
 
 
 def save_investigation(report):
@@ -100,8 +132,8 @@ def save_investigation(report):
             """
             INSERT INTO investigation_reports
             (report_id, scenario_a, scenario_b,
-             evaluation_status, payload, created_at)
-            VALUES (?, ?, ?, ?, ?, ?)
+             evaluation_status, payload, payload_sha256, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 report_id,
@@ -109,6 +141,7 @@ def save_investigation(report):
                 scenario_b,
                 evaluation["status"],
                 json.dumps(saved),
+                _payload_digest(saved),
                 created_at,
             ),
         )
@@ -124,7 +157,7 @@ def investigation_history(limit=20):
         _create_table(db)
         rows = db.execute(
             """
-            SELECT payload
+            SELECT payload, payload_sha256
             FROM investigation_reports
             ORDER BY id DESC
             LIMIT ?
@@ -132,7 +165,10 @@ def investigation_history(limit=20):
             (limit,),
         ).fetchall()
 
-    return [json.loads(row[0]) for row in rows]
+    return [
+        _verify_payload(json.loads(row[0]), row[1])
+        for row in rows
+    ]
 
 
 def get_investigation(report_id):
@@ -143,8 +179,8 @@ def get_investigation(report_id):
     with closing(connect()) as db:
         _create_table(db)
         row = db.execute(
-            "SELECT payload FROM investigation_reports WHERE report_id = ?",
+            "SELECT payload, payload_sha256 FROM investigation_reports WHERE report_id = ?",
             (report_id,),
         ).fetchone()
 
-    return json.loads(row[0]) if row else None
+    return _verify_payload(json.loads(row[0]), row[1]) if row else None
