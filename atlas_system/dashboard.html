@@ -205,6 +205,46 @@ pre {
     }
 }
 
+
+/* ATLAS_V19_COMPARISON_CARDS */
+.comparison-cards {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:16px;
+  margin:18px 0;
+}
+.comparison-card {
+  background:#17273e;
+  border:1px solid #304764;
+  border-radius:14px;
+  padding:22px;
+}
+.comparison-card h3 {
+  margin:0 0 12px;
+  font-size:18px;
+}
+.comparison-severity {
+  display:inline-block;
+  padding:5px 10px;
+  border-radius:20px;
+  background:#304764;
+  font-size:12px;
+  font-weight:700;
+}
+.comparison-metric {
+  font-size:32px;
+  font-weight:800;
+  color:#67e8f9;
+  margin:14px 0 4px;
+}
+.comparison-card p {
+  color:#b9c9dd;
+  margin:8px 0;
+}
+@media(max-width:700px) {
+  .comparison-cards {grid-template-columns:1fr}
+}
+
 </style></head><body><header><small>LOCAL SIMULATION · NO LIVE PAYMENTS</small><h1>ATLAS AI / Mission Control</h1><p class="note">Synthetic incident detection, explainable investigation, recovery proposals and human approval.</p></header>
 <main><div class="grid"><section class="stat">Incidents recorded<strong id="count">0</strong></section><section class="stat">Critical incidents<strong id="critical">0</strong></section><section class="stat">Pending actions<strong id="pending">0</strong></section></div>
 <section><h2>1. Generate synthetic incident</h2><div class="row"><div><label for="scenario">Scenario</label><select id="scenario"><option value="">Random</option><option value="healthy">Healthy</option><option value="provider_outage">Provider outage</option><option value="latency_spike">Latency spike</option><option value="retry_storm">Retry storm</option></select></div><button onclick="generate()">Generate & investigate</button></div></section>
@@ -262,6 +302,8 @@ pre {
 <button id="compare-run" onclick="runComparison()">Compare incidents</button>
 <button id="compare-download" onclick="downloadComparison()" disabled>Download JSON report</button>
 </div>
+<!-- ATLAS_V19_COMPARISON_CARDS -->
+<div id="comparison-cards" class="comparison-cards" aria-live="polite"></div>
 <pre id="comparison-output" aria-live="polite">Select two scenarios and click Compare incidents.</pre>
 </section>
 
@@ -499,6 +541,54 @@ async function runRootCause(){
 
 // ATLAS_V14_WORKBENCH
 let comparisonReport = null;
+ document.getElementById('comparison-cards').replaceChildren();
+
+
+// ATLAS_V19_RENDER_COMPARISON
+function renderComparisonCards(report) {
+ const container = document.getElementById('comparison-cards');
+ if (!container) return;
+
+ container.replaceChildren();
+
+ for (const key of ['incident_a', 'incident_b']) {
+  const incident = report[key];
+  if (!incident || !incident.metrics) continue;
+
+  const card = document.createElement('article');
+  card.className = 'comparison-card';
+
+  const heading = document.createElement('h3');
+  heading.textContent = String(incident.scenario || key)
+    .replaceAll('_', ' ');
+
+  const severity = document.createElement('span');
+  severity.className = 'comparison-severity';
+  severity.textContent = String(incident.severity || 'UNKNOWN');
+
+  const metric = document.createElement('div');
+  metric.className = 'comparison-metric';
+
+  const rate = Number(incident.metrics.payment_success_rate);
+  metric.textContent = Number.isFinite(rate)
+    ? rate.toFixed(1) + '%'
+    : 'N/A';
+
+  const label = document.createElement('p');
+  label.textContent = 'Payment success rate';
+
+  const latency = document.createElement('p');
+  latency.textContent = 'Average latency: ' +
+    String(incident.metrics.average_latency_ms ?? 'N/A') + ' ms';
+
+  const failures = document.createElement('p');
+  failures.textContent = 'Failed transactions: ' +
+    String(incident.metrics.failed_transactions ?? 'N/A');
+
+  card.append(heading, severity, metric, label, latency, failures);
+  container.appendChild(card);
+ }
+}
 
 async function runComparison(){
  const button = document.getElementById('compare-run');
@@ -520,6 +610,7 @@ async function runComparison(){
   });
 
   comparisonReport = result;
+  renderComparisonCards(result);
   display('comparison-output', result);
   download.disabled = false;
  } catch(e) {
