@@ -443,6 +443,71 @@ pre {
     border-color: #a87b36;
 }
 
+
+/* ATLAS_V20_EXECUTION_TIMELINE */
+.v20-timeline {
+    display: grid;
+    gap: 14px;
+    margin: 16px 0 24px;
+}
+
+.v20-timeline-stage {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    background: linear-gradient(145deg, #172840, #0e1a2c);
+    border: 1px solid #365173;
+    border-radius: 13px;
+    padding: 18px;
+}
+
+.v20-timeline-stage.is-complete {
+    border-left: 4px solid #2dd4bf;
+}
+
+.v20-timeline-stage.is-failed {
+    border-left: 4px solid #f87171;
+}
+
+.v20-timeline-icon {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: #164e48;
+    color: #99f6e4;
+    font-weight: 700;
+}
+
+.v20-timeline-stage.is-failed .v20-timeline-icon {
+    background: #5b232b;
+    color: #fecaca;
+}
+
+.v20-timeline-content {
+    min-width: 0;
+    flex: 1;
+}
+
+.v20-timeline-title {
+    color: #f1f6ff;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 7px;
+}
+
+.v20-timeline-meta {
+    color: #a9bfd9;
+    font-size: 13px;
+}
+
+.v20-timeline-empty {
+    color: #a9bfd9;
+    padding: 14px 0;
+}
+
 </style></head><body><header><small>LOCAL SIMULATION · NO LIVE PAYMENTS</small><h1>ATLAS AI / Mission Control</h1><p class="note">Synthetic incident detection, explainable investigation, recovery proposals and human approval.</p></header>
 <main><div class="grid"><section class="stat">Incidents recorded<strong id="count">0</strong></section><section class="stat">Critical incidents<strong id="critical">0</strong></section><section class="stat">Pending actions<strong id="pending">0</strong></section></div>
 <section><h2>1. Generate synthetic incident</h2><div class="row"><div><label for="scenario">Scenario</label><select id="scenario"><option value="">Random</option><option value="healthy">Healthy</option><option value="provider_outage">Provider outage</option><option value="latency_spike">Latency spike</option><option value="retry_storm">Retry storm</option></select></div><button onclick="generate()">Generate & investigate</button></div></section>
@@ -597,9 +662,9 @@ Compare two synthetic incidents first, then evaluate the report.
   </div>
 
   <h3>Execution stages</h3>
-  <pre id="v20-stages" aria-live="polite">
+  <div id="v20-stages" class="v20-timeline" aria-live="polite">
 No investigation executed yet.
-  </pre>
+  </div>
 
   <h3>Root-cause hypotheses and report</h3>
   <pre id="v20-report" aria-live="polite">
@@ -1214,6 +1279,60 @@ document.getElementById('archive-select').addEventListener('change', () => {
  document.getElementById('archive-output').textContent = 'Selection changed. Click View saved report.';
 });
 
+
+// ATLAS_V20_TIMELINE_RENDERER
+function renderV20Timeline(stages) {
+  const container = document.getElementById('v20-stages');
+  container.replaceChildren();
+
+  if (!Array.isArray(stages) || stages.length === 0) {
+    container.textContent = 'No execution stages available.';
+    return;
+  }
+
+  for (const stage of stages) {
+    const complete = stage.status === 'COMPLETED';
+
+    const card = document.createElement('div');
+    card.className = 'v20-timeline-stage ' +
+      (complete ? 'is-complete' : 'is-failed');
+
+    const icon = document.createElement('div');
+    icon.className = 'v20-timeline-icon';
+    icon.textContent = complete ? '✓' : '!';
+
+    const content = document.createElement('div');
+    content.className = 'v20-timeline-content';
+
+    const title = document.createElement('div');
+    title.className = 'v20-timeline-title';
+    title.textContent = String(stage.stage || 'Unknown stage')
+      .replaceAll('_', ' ');
+
+    const meta = document.createElement('div');
+    meta.className = 'v20-timeline-meta';
+
+    const duration = typeof stage.duration_ms === 'number'
+      ? stage.duration_ms.toFixed(3) + ' ms'
+      : 'Duration unavailable';
+
+    meta.textContent = String(stage.status || 'UNKNOWN') +
+      ' · ' + duration;
+
+    content.append(title, meta);
+
+    if (stage.error) {
+      const error = document.createElement('div');
+      error.className = 'v20-timeline-meta';
+      error.textContent = String(stage.error);
+      content.appendChild(error);
+    }
+
+    card.append(icon, content);
+    container.appendChild(card);
+  }
+}
+
 // ATLAS_V20_INVESTIGATION_JS
 async function runV20Investigation(){
   const button = document.getElementById('v20-run');
@@ -1295,7 +1414,7 @@ async function runV20Investigation(){
       summary.appendChild(card);
     }
 
-    display('v20-stages', result.stages);
+    renderV20Timeline(result.stages);
     display('v20-report', {
       incident_a: result.report.incident_a,
       incident_b: result.report.incident_b,
