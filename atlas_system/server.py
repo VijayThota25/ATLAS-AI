@@ -14,6 +14,7 @@ from root_cause import analyze as root_cause_analyze  # ATLAS_V13_ROOT_CAUSE
 from report_evaluator import evaluate_report  # ATLAS_V15_REPORT_EVALUATOR
 from investigation_archive import save_investigation, investigation_history, get_investigation  # ATLAS_V16_ARCHIVE
 from incident_comparison import compare_incidents  # ATLAS_V14_COMPARISON
+from investigation_orchestrator import run_investigation
 from workflow_analytics import summarize_workflows  # ATLAS_V12_ANALYTICS
 from workflow_trace import trace as workflow_trace, regression as workflow_regression  # ATLAS_V10_WORKFLOW
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -91,6 +92,12 @@ class Handler(BaseHTTPRequestHandler):
                 name = payload.get('scenario')
                 if name is not None and name not in SCENARIOS: return self.respond(400, {'error': 'Invalid scenario'})
                 return self.respond(201, create_incident(name))
+            if path == '/api/investigations/run':
+                scenario_a = payload.get('scenario_a', 'provider_outage')
+                scenario_b = payload.get('scenario_b', 'healthy')
+                if scenario_a not in SCENARIOS or scenario_b not in SCENARIOS:
+                    return self.respond(400, {'error': 'Invalid synthetic scenario'})
+                return self.respond(200, run_investigation(scenario_a, scenario_b))
             if path == '/api/llm-analysis':
                 incident_id = payload.get('incident_id')
                 if not isinstance(incident_id, str):

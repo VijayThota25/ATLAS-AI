@@ -81,8 +81,10 @@ Run:
 
     python -m unittest discover -s atlas_system -p "test_*.py" -v
 
-The v1.6 release passed 48 automated tests and 11 workflow regression checks.
+The ATLAS AI v2.0 development branch passed 71 automated regression tests.
 
+The test suite covers deterministic investigation workflows, scenario validation,
+API responses, report evaluation, archive integrity, and safety constraints.
 ## Demonstration
 
 1. Open the local dashboard.
@@ -119,6 +121,51 @@ ATLAS AI is a development-only simulation prototype.
 - v1.7: Documentation, reliability and demo readiness
 - v1.8: API reliability tests and SHA-256 archive integrity checks
 - v1.9: Premium Mission Control dashboard, visual incident comparison, metric deltas, evaluation scorecard and investigation archive summary
+- v2.0: One-click synthetic investigation orchestration, premium investigation status cards, visual execution timeline, structured root-cause evidence cards, and scenario comparison reporting.
+
+## ATLAS AI v2.0 — Autonomous Investigation
+
+ATLAS AI v2.0 introduces a one-click, deterministic investigation
+workflow for synthetic payment incidents.
+
+### Capabilities
+
+- Compare two predefined synthetic incident scenarios.
+- Generate deterministic root-cause hypotheses.
+- Evaluate investigation reports using seven quality checks.
+- Display investigation status and execution safety indicators.
+- Visualize workflow stages and execution durations.
+- Review supporting evidence, alternative explanations, and missing evidence.
+- Compare payment success rates, processing latency, and failed transactions.
+
+### Investigation API
+
+Endpoint:
+
+POST /api/investigations/run
+
+Example request:
+
+{
+  "scenario_a": "provider_outage",
+  "scenario_b": "healthy"
+}
+
+The API returns investigation status, execution stages,
+scenario comparisons, root-cause hypotheses, and report evaluation results.
+
+### Safety Boundaries
+
+- Uses predefined synthetic payment scenarios only.
+- Does not contact live payment providers.
+- Does not execute real payment transactions or recovery actions.
+- Does not automatically archive investigation results.
+- Requires human review of investigation findings.
+- Root-cause hypotheses are not verified causal conclusions.
+- The local server is not authenticated and must not be publicly exposed.
+
+The term "autonomous" refers to automated investigation orchestration,
+not autonomous remediation or production decision-making.
 
 ## License
 

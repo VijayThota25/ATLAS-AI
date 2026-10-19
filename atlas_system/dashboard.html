@@ -391,6 +391,189 @@ pre {
   .archive-summary-grid {grid-template-columns:1fr}
 }
 
+
+/* ATLAS_V20_STATUS_CARDS */
+.v20-status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin: 20px 0;
+}
+
+.v20-status-card {
+    background: linear-gradient(145deg, #192b46, #101d31);
+    border: 1px solid #365173;
+    border-radius: 14px;
+    padding: 20px;
+    min-width: 0;
+}
+
+.v20-status-label {
+    color: #9bb4d2;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.v20-status-value {
+    display: block;
+    color: #eef6ff;
+    font-size: 21px;
+    font-weight: 750;
+    margin: 12px 0 6px;
+    overflow-wrap: anywhere;
+}
+
+.v20-status-detail {
+    color: #a9bfd9;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.v20-status-card.is-success {
+    border-color: #237c76;
+}
+
+.v20-status-card.is-success .v20-status-value {
+    color: #67e8c3;
+}
+
+.v20-status-card.is-warning {
+    border-color: #a87b36;
+}
+
+
+/* ATLAS_V20_EXECUTION_TIMELINE */
+.v20-timeline {
+    display: grid;
+    gap: 14px;
+    margin: 16px 0 24px;
+}
+
+.v20-timeline-stage {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    background: linear-gradient(145deg, #172840, #0e1a2c);
+    border: 1px solid #365173;
+    border-radius: 13px;
+    padding: 18px;
+}
+
+.v20-timeline-stage.is-complete {
+    border-left: 4px solid #2dd4bf;
+}
+
+.v20-timeline-stage.is-failed {
+    border-left: 4px solid #f87171;
+}
+
+.v20-timeline-icon {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: #164e48;
+    color: #99f6e4;
+    font-weight: 700;
+}
+
+.v20-timeline-stage.is-failed .v20-timeline-icon {
+    background: #5b232b;
+    color: #fecaca;
+}
+
+.v20-timeline-content {
+    min-width: 0;
+    flex: 1;
+}
+
+.v20-timeline-title {
+    color: #f1f6ff;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 7px;
+}
+
+.v20-timeline-meta {
+    color: #a9bfd9;
+    font-size: 13px;
+}
+
+.v20-timeline-empty {
+    color: #a9bfd9;
+    padding: 14px 0;
+}
+
+
+/* ATLAS_V20_EVIDENCE_CARDS */
+.v20-evidence-grid {
+    display: grid;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.v20-evidence-card {
+    background: linear-gradient(145deg, #172840, #0e1a2c);
+    border: 1px solid #365173;
+    border-radius: 14px;
+    padding: 22px;
+    min-width: 0;
+}
+
+.v20-evidence-card h4 {
+    margin: 0 0 14px;
+    color: #93c5fd;
+    font-size: 17px;
+}
+
+.v20-evidence-card h5 {
+    margin: 18px 0 8px;
+    color: #a9bfd9;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+}
+
+.v20-evidence-card p {
+    margin: 6px 0;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+.v20-evidence-card ul {
+    margin: 6px 0;
+    padding-left: 22px;
+    line-height: 1.7;
+}
+
+.v20-evidence-meta {
+    color: #67e8f9;
+    font-size: 13px;
+}
+
+.v20-evidence-warning {
+    color: #fbbf24;
+    font-size: 13px;
+    margin-top: 16px;
+}
+
+.v20-evidence-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+}
+
+.v20-evidence-metric {
+    background: #101d31;
+    border: 1px solid #2d4565;
+    border-radius: 9px;
+    padding: 12px;
+}
+
 </style></head><body><header><small>LOCAL SIMULATION · NO LIVE PAYMENTS</small><h1>ATLAS AI / Mission Control</h1><p class="note">Synthetic incident detection, explainable investigation, recovery proposals and human approval.</p></header>
 <main><div class="grid"><section class="stat">Incidents recorded<strong id="count">0</strong></section><section class="stat">Critical incidents<strong id="critical">0</strong></section><section class="stat">Pending actions<strong id="pending">0</strong></section></div>
 <section><h2>1. Generate synthetic incident</h2><div class="row"><div><label for="scenario">Scenario</label><select id="scenario"><option value="">Random</option><option value="healthy">Healthy</option><option value="provider_outage">Provider outage</option><option value="latency_spike">Latency spike</option><option value="retry_storm">Retry storm</option></select></div><button onclick="generate()">Generate & investigate</button></div></section>
@@ -503,7 +686,59 @@ Compare two synthetic incidents first, then evaluate the report.
 </section>
 
 <section><h2>15. Recent incident history</h2><pre id="history">Loading...</pre></section>
-<p class="note">ATLAS v1.0: LangGraph coordinates deterministic investigation steps. Optional Llama 3.2 provides structured, unverified advisory reports. SimPy simulates synthetic timing events; Monte Carlo trials estimate synthetic recovery outcomes. No real LLM reasoning or calibrated payment-provider predictions. Sandbox only.</p></main>
+<p class="note">ATLAS v1.0: LangGraph coordinates deterministic investigation steps. Optional Llama 3.2 provides structured, unverified advisory reports. SimPy simulates synthetic timing events; Monte Carlo trials estimate synthetic recovery outcomes. No real LLM reasoning or calibrated payment-provider predictions. Sandbox only.</p>
+<!-- ATLAS_V20_INVESTIGATION_PANEL -->
+<section id="v20-investigation-section">
+  <h2>16. Autonomous Investigation (v2.0)</h2>
+  <p class="note">
+    One-click deterministic investigation of synthetic incidents.
+    Root-cause hypotheses are unverified. Human review is required.
+    No automatic archiving or recovery execution.
+  </p>
+
+  <div class="row">
+    <div>
+      <label for="v20-scenario-a">Scenario A</label>
+      <select id="v20-scenario-a">
+        <option value="provider_outage">Provider outage</option>
+        <option value="healthy">Healthy</option>
+        <option value="latency_spike">Latency spike</option>
+        <option value="retry_storm">Retry storm</option>
+      </select>
+    </div>
+
+    <div>
+      <label for="v20-scenario-b">Scenario B</label>
+      <select id="v20-scenario-b">
+        <option value="healthy">Healthy</option>
+        <option value="provider_outage">Provider outage</option>
+        <option value="latency_spike">Latency spike</option>
+        <option value="retry_storm">Retry storm</option>
+      </select>
+    </div>
+
+    <button id="v20-run" onclick="runV20Investigation()">
+      Run Investigation
+    </button>
+  </div>
+
+  <div id="v20-summary" class="quality-scorecard"
+       aria-live="polite">
+    Select two synthetic scenarios and run an investigation.
+  </div>
+
+  <h3>Execution stages</h3>
+  <div id="v20-stages" class="v20-timeline" aria-live="polite">
+No investigation executed yet.
+  </div>
+
+  <h3>Root-cause hypotheses and report</h3>
+  <div id="v20-report" class="v20-evidence-grid" aria-live="polite">
+No report available.
+</div>
+</section>
+
+</main>
 <script>
 let current=null,pending=null;
 async function api(path,method='GET',data){let r=await fetch(path,{method,headers:{'Content-Type':'application/json'},body:data?JSON.stringify(data):undefined});let j=await r.json();if(!r.ok)throw Error(j.error||'Request failed');return j}
@@ -1109,6 +1344,276 @@ document.getElementById('archive-select').addEventListener('change', () => {
  document.getElementById('archive-download').disabled = true;
  document.getElementById('archive-output').textContent = 'Selection changed. Click View saved report.';
 });
+
+
+// ATLAS_V20_TIMELINE_RENDERER
+function renderV20Timeline(stages) {
+  const container = document.getElementById('v20-stages');
+  container.replaceChildren();
+
+  if (!Array.isArray(stages) || stages.length === 0) {
+    container.textContent = 'No execution stages available.';
+    return;
+  }
+
+  for (const stage of stages) {
+    const complete = stage.status === 'COMPLETED';
+
+    const card = document.createElement('div');
+    card.className = 'v20-timeline-stage ' +
+      (complete ? 'is-complete' : 'is-failed');
+
+    const icon = document.createElement('div');
+    icon.className = 'v20-timeline-icon';
+    icon.textContent = complete ? '✓' : '!';
+
+    const content = document.createElement('div');
+    content.className = 'v20-timeline-content';
+
+    const title = document.createElement('div');
+    title.className = 'v20-timeline-title';
+    title.textContent = String(stage.stage || 'Unknown stage')
+      .replaceAll('_', ' ');
+
+    const meta = document.createElement('div');
+    meta.className = 'v20-timeline-meta';
+
+    const duration = typeof stage.duration_ms === 'number'
+      ? stage.duration_ms.toFixed(3) + ' ms'
+      : 'Duration unavailable';
+
+    meta.textContent = String(stage.status || 'UNKNOWN') +
+      ' · ' + duration;
+
+    content.append(title, meta);
+
+    if (stage.error) {
+      const error = document.createElement('div');
+      error.className = 'v20-timeline-meta';
+      error.textContent = String(stage.error);
+      content.appendChild(error);
+    }
+
+    card.append(icon, content);
+    container.appendChild(card);
+  }
+}
+
+
+// ATLAS_V20_EVIDENCE_RENDERER
+function renderV20Evidence(report) {
+  const container = document.getElementById('v20-report');
+  container.replaceChildren();
+
+  function element(tag, text, className) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    node.textContent = String(text ?? '');
+    return node;
+  }
+
+  function section(card, heading, values) {
+    card.appendChild(element('h5', heading));
+
+    if (!Array.isArray(values) || values.length === 0) {
+      card.appendChild(element('p', 'None reported.'));
+      return;
+    }
+
+    const list = document.createElement('ul');
+
+    for (const value of values) {
+      list.appendChild(element('li', value));
+    }
+
+    card.appendChild(list);
+  }
+
+  function scenarioCard(title, incident, rca) {
+    const card = document.createElement('div');
+    card.className = 'v20-evidence-card';
+
+    card.appendChild(element('h4', title));
+    card.appendChild(element(
+      'p',
+      'Scenario: ' + incident.scenario +
+      ' | Severity: ' + incident.severity,
+      'v20-evidence-meta'
+    ));
+
+    card.appendChild(element('h5', 'Primary Hypothesis'));
+    card.appendChild(element('p', rca.primary_hypothesis));
+
+    card.appendChild(element(
+      'p',
+      'Confidence: ' + rca.confidence,
+      'v20-evidence-warning'
+    ));
+
+    section(
+      card,
+      'Supporting Evidence',
+      (rca.supporting_evidence || []).map(
+        item => item.display
+      )
+    );
+
+    section(card, 'Triggered Rules', rca.triggered_rules);
+    section(card, 'Alternative Explanations',
+      rca.alternative_explanations);
+    section(card, 'Missing Evidence', rca.missing_evidence);
+    section(card, 'Investigation Steps', rca.investigation_steps);
+
+    card.appendChild(element(
+      'p',
+      rca.limitations,
+      'v20-evidence-warning'
+    ));
+
+    return card;
+  }
+
+  container.appendChild(
+    scenarioCard('Scenario A', report.incident_a, report.root_cause_a)
+  );
+
+  container.appendChild(
+    scenarioCard('Scenario B', report.incident_b, report.root_cause_b)
+  );
+
+  const comparison = document.createElement('div');
+  comparison.className = 'v20-evidence-card';
+
+  comparison.appendChild(element('h4', 'Comparison: B - A'));
+
+  const metrics = document.createElement('div');
+  metrics.className = 'v20-evidence-metrics';
+
+  const differences = report.differences_b_minus_a || {};
+
+  const entries = [
+    ['Success Rate Change',
+      differences.success_rate_percentage_points, ' percentage points'],
+    ['Latency Change', differences.latency_ms, ' ms'],
+    ['Failed Transactions Change',
+      differences.failed_transactions, '']
+  ];
+
+  for (const [label, value, unit] of entries) {
+    const metric = document.createElement('div');
+    metric.className = 'v20-evidence-metric';
+
+    metric.appendChild(element('h5', label));
+    metric.appendChild(element('p', String(value) + unit));
+
+    metrics.appendChild(metric);
+  }
+
+  comparison.appendChild(metrics);
+
+  comparison.appendChild(element(
+    'p',
+    report.limitations,
+    'v20-evidence-warning'
+  ));
+
+  container.appendChild(comparison);
+}
+
+// ATLAS_V20_INVESTIGATION_JS
+async function runV20Investigation(){
+  const button = document.getElementById('v20-run');
+  const summary = document.getElementById('v20-summary');
+  const stages = document.getElementById('v20-stages');
+  const report = document.getElementById('v20-report');
+
+  button.disabled = true;
+  summary.className = 'quality-scorecard';
+  summary.textContent = 'Running synthetic investigation...';
+  stages.textContent = 'Waiting for execution results...';
+  report.textContent = 'Waiting for report...';
+
+  try {
+    const result = await api('/api/investigations/run', 'POST', {
+      scenario_a: document.getElementById('v20-scenario-a').value,
+      scenario_b: document.getElementById('v20-scenario-b').value
+    });
+
+    const evaluation = result.evaluation || {};
+    const completed = (result.stages || []).filter(
+      stage => stage.status === 'COMPLETED'
+    ).length;
+
+    const cards = [
+      {
+        label: 'Investigation',
+        value: result.status === 'READY_FOR_HUMAN_REVIEW'
+          ? 'Ready for Review' : result.status,
+        detail: 'Synthetic investigation status',
+        tone: result.status === 'READY_FOR_HUMAN_REVIEW'
+          ? 'is-success' : 'is-warning'
+      },
+      {
+        label: 'Quality Score',
+        value: evaluation.passed_checks + '/' + evaluation.total_checks,
+        detail: evaluation.status + ' - deterministic checks',
+        tone: evaluation.status === 'PASS'
+          ? 'is-success' : 'is-warning'
+      },
+      {
+        label: 'Human Approval',
+        value: result.requires_human_approval ? 'Required' : 'Not required',
+        detail: 'Manual review before any action',
+        tone: result.requires_human_approval
+          ? 'is-warning' : ''
+      },
+      {
+        label: 'Execution Safety',
+        value: !result.action_executed && !result.data_persisted
+          ? 'Read-only' : 'Review required',
+        detail: 'Action executed: ' + result.action_executed +
+          ' | Data saved: ' + result.data_persisted,
+        tone: !result.action_executed && !result.data_persisted
+          ? 'is-success' : 'is-warning'
+      }
+    ];
+
+    summary.replaceChildren();
+    summary.className = 'v20-status-grid';
+
+    for (const item of cards) {
+      const card = document.createElement('div');
+      card.className = 'v20-status-card ' + item.tone;
+
+      const label = document.createElement('div');
+      label.className = 'v20-status-label';
+      label.textContent = item.label;
+
+      const value = document.createElement('div');
+      value.className = 'v20-status-value';
+      value.textContent = item.value;
+
+      const detail = document.createElement('div');
+      detail.className = 'v20-status-detail';
+      detail.textContent = item.detail;
+
+      card.append(label, value, detail);
+      summary.appendChild(card);
+    }
+
+    renderV20Timeline(result.stages);
+    renderV20Evidence(result.report);
+
+  } catch(error) {
+    summary.className = 'quality-scorecard';
+    summary.textContent = 'Investigation failed: ' + error.message;
+    stages.textContent = 'No completed investigation.';
+    report.textContent = 'No report available.';
+  } finally {
+    button.disabled = false;
+  }
+}
+
 refreshInvestigationHistory();
 
 </script></body></html>
