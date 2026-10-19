@@ -117,6 +117,8 @@ ATLAS AI is a development-only simulation prototype.
 - v1.5: Report evaluation and export
 - v1.6: Investigation archive
 - v1.7: Documentation, reliability and demo readiness
+- v1.8: API reliability tests and SHA-256 archive integrity checks
+- v1.9: Premium Mission Control dashboard, visual incident comparison, metric deltas, evaluation scorecard and investigation archive summary
 
 ## License
 
