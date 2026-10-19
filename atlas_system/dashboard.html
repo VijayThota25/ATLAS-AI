@@ -503,7 +503,59 @@ Compare two synthetic incidents first, then evaluate the report.
 </section>
 
 <section><h2>15. Recent incident history</h2><pre id="history">Loading...</pre></section>
-<p class="note">ATLAS v1.0: LangGraph coordinates deterministic investigation steps. Optional Llama 3.2 provides structured, unverified advisory reports. SimPy simulates synthetic timing events; Monte Carlo trials estimate synthetic recovery outcomes. No real LLM reasoning or calibrated payment-provider predictions. Sandbox only.</p></main>
+<p class="note">ATLAS v1.0: LangGraph coordinates deterministic investigation steps. Optional Llama 3.2 provides structured, unverified advisory reports. SimPy simulates synthetic timing events; Monte Carlo trials estimate synthetic recovery outcomes. No real LLM reasoning or calibrated payment-provider predictions. Sandbox only.</p>
+<!-- ATLAS_V20_INVESTIGATION_PANEL -->
+<section id="v20-investigation-section">
+  <h2>16. Autonomous Investigation (v2.0)</h2>
+  <p class="note">
+    One-click deterministic investigation of synthetic incidents.
+    Root-cause hypotheses are unverified. Human review is required.
+    No automatic archiving or recovery execution.
+  </p>
+
+  <div class="row">
+    <div>
+      <label for="v20-scenario-a">Scenario A</label>
+      <select id="v20-scenario-a">
+        <option value="provider_outage">Provider outage</option>
+        <option value="healthy">Healthy</option>
+        <option value="latency_spike">Latency spike</option>
+        <option value="retry_storm">Retry storm</option>
+      </select>
+    </div>
+
+    <div>
+      <label for="v20-scenario-b">Scenario B</label>
+      <select id="v20-scenario-b">
+        <option value="healthy">Healthy</option>
+        <option value="provider_outage">Provider outage</option>
+        <option value="latency_spike">Latency spike</option>
+        <option value="retry_storm">Retry storm</option>
+      </select>
+    </div>
+
+    <button id="v20-run" onclick="runV20Investigation()">
+      Run Investigation
+    </button>
+  </div>
+
+  <div id="v20-summary" class="quality-scorecard"
+       aria-live="polite">
+    Select two synthetic scenarios and run an investigation.
+  </div>
+
+  <h3>Execution stages</h3>
+  <pre id="v20-stages" aria-live="polite">
+No investigation executed yet.
+  </pre>
+
+  <h3>Root-cause hypotheses and report</h3>
+  <pre id="v20-report" aria-live="polite">
+No report available.
+  </pre>
+</section>
+
+</main>
 <script>
 let current=null,pending=null;
 async function api(path,method='GET',data){let r=await fetch(path,{method,headers:{'Content-Type':'application/json'},body:data?JSON.stringify(data):undefined});let j=await r.json();if(!r.ok)throw Error(j.error||'Request failed');return j}
@@ -1109,6 +1161,60 @@ document.getElementById('archive-select').addEventListener('change', () => {
  document.getElementById('archive-download').disabled = true;
  document.getElementById('archive-output').textContent = 'Selection changed. Click View saved report.';
 });
+
+// ATLAS_V20_INVESTIGATION_JS
+async function runV20Investigation(){
+  const button = document.getElementById('v20-run');
+  const summary = document.getElementById('v20-summary');
+  const stages = document.getElementById('v20-stages');
+  const report = document.getElementById('v20-report');
+
+  button.disabled = true;
+  summary.textContent = 'Running synthetic investigation...';
+  stages.textContent = 'Waiting for execution results...';
+  report.textContent = 'Waiting for report...';
+
+  try {
+    const result = await api('/api/investigations/run', 'POST', {
+      scenario_a: document.getElementById('v20-scenario-a').value,
+      scenario_b: document.getElementById('v20-scenario-b').value
+    });
+
+    const evaluation = result.evaluation || {};
+    const completed = (result.stages || []).filter(
+      stage => stage.status === 'COMPLETED'
+    ).length;
+
+    summary.textContent =
+      'Investigation: ' + result.status + '\n' +
+      'Quality checks: ' + evaluation.passed_checks +
+      '/' + evaluation.total_checks + ' (' + evaluation.status + ')\n' +
+      'Stages completed: ' + completed +
+      '/' + (result.stages || []).length + '\n' +
+      'Human approval required: ' + result.requires_human_approval + '\n' +
+      'Action executed: ' + result.action_executed + '\n' +
+      'Data persisted: ' + result.data_persisted;
+
+    display('v20-stages', result.stages);
+    display('v20-report', {
+      incident_a: result.report.incident_a,
+      incident_b: result.report.incident_b,
+      differences_b_minus_a: result.report.differences_b_minus_a,
+      root_cause_a: result.report.root_cause_a,
+      root_cause_b: result.report.root_cause_b,
+      evaluation: result.evaluation,
+      limitations: result.limitations
+    });
+
+  } catch(error) {
+    summary.textContent = 'Investigation failed: ' + error.message;
+    stages.textContent = 'No completed investigation.';
+    report.textContent = 'No report available.';
+  } finally {
+    button.disabled = false;
+  }
+}
+
 refreshInvestigationHistory();
 
 </script></body></html>
