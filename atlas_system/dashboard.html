@@ -278,6 +278,63 @@ pre {
   .comparison-deltas {grid-template-columns:1fr}
 }
 
+
+/* ATLAS_V19_QUALITY_SCORECARD */
+.quality-scorecard:empty {display:none}
+.quality-scorecard {
+  background:#17273e;
+  border:1px solid #304764;
+  border-radius:14px;
+  padding:22px;
+  margin:18px 0;
+}
+.quality-scorecard h3 {margin:0 0 10px}
+.quality-score {
+  font-size:36px;
+  font-weight:800;
+  color:#67e8f9;
+}
+.quality-status {
+  display:inline-block;
+  padding:5px 12px;
+  border-radius:20px;
+  background:#304764;
+  font-weight:700;
+  margin:10px 0;
+}
+.quality-progress {
+  height:10px;
+  background:#304764;
+  border-radius:10px;
+  overflow:hidden;
+  margin:15px 0;
+}
+.quality-progress-fill {
+  height:100%;
+  background:#22c55e;
+}
+.quality-checks {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+}
+.quality-check {
+  padding:12px;
+  border:1px solid #304764;
+  border-radius:10px;
+  color:#d8e5f5;
+}
+.quality-pass {border-left:4px solid #22c55e}
+.quality-fail {border-left:4px solid #f87171}
+.quality-note {
+  color:#aebfd8;
+  font-size:13px;
+  margin-top:16px;
+}
+@media(max-width:700px) {
+  .quality-checks {grid-template-columns:1fr}
+}
+
 </style></head><body><header><small>LOCAL SIMULATION · NO LIVE PAYMENTS</small><h1>ATLAS AI / Mission Control</h1><p class="note">Synthetic incident detection, explainable investigation, recovery proposals and human approval.</p></header>
 <main><div class="grid"><section class="stat">Incidents recorded<strong id="count">0</strong></section><section class="stat">Critical incidents<strong id="critical">0</strong></section><section class="stat">Pending actions<strong id="pending">0</strong></section></div>
 <section><h2>1. Generate synthetic incident</h2><div class="row"><div><label for="scenario">Scenario</label><select id="scenario"><option value="">Random</option><option value="healthy">Healthy</option><option value="provider_outage">Provider outage</option><option value="latency_spike">Latency spike</option><option value="retry_storm">Retry storm</option></select></div><button onclick="generate()">Generate & investigate</button></div></section>
@@ -359,6 +416,8 @@ onclick="downloadReportEvaluation()" disabled>
 Download evaluation JSON
 </button>
 </div>
+<!-- ATLAS_V19_QUALITY_SCORECARD -->
+<div id="quality-scorecard" class="quality-scorecard" aria-live="polite"></div>
 <pre id="report-evaluation-output" aria-live="polite">
 Compare two synthetic incidents first, then evaluate the report.
 </pre>
@@ -578,6 +637,7 @@ async function runRootCause(){
 let comparisonReport = null;
  document.getElementById('comparison-cards').replaceChildren();
  document.getElementById('comparison-deltas').replaceChildren();
+ document.getElementById('quality-scorecard').replaceChildren();
 
 
 // ATLAS_V19_RENDER_COMPARISON
@@ -725,10 +785,71 @@ function downloadComparison(){
 // ATLAS_V15_REPORT_EVALUATION
 let reportEvaluation = null;
 
+
+// ATLAS_V19_RENDER_QUALITY_SCORECARD
+function renderQualityScorecard(result) {
+ const container = document.getElementById('quality-scorecard');
+ if (!container) return;
+ container.replaceChildren();
+
+ const passed = Number(result.passed_checks);
+ const total = Number(result.total_checks);
+ const checks = result.checks;
+
+ if (!checks || typeof checks !== 'object' ||
+     Array.isArray(checks) ||
+     !Number.isFinite(passed) ||
+     !Number.isFinite(total) || total <= 0) return;
+
+ const title = document.createElement('h3');
+ title.textContent = 'Investigation Quality Scorecard';
+
+ const score = document.createElement('div');
+ score.className = 'quality-score';
+ score.textContent = passed + ' / ' + total;
+
+ const status = document.createElement('span');
+ status.className = 'quality-status';
+ status.textContent = String(result.status || 'UNKNOWN');
+
+ const progress = document.createElement('div');
+ progress.className = 'quality-progress';
+
+ const fill = document.createElement('div');
+ fill.className = 'quality-progress-fill';
+ fill.style.width =
+  Math.max(0, Math.min(100, passed / total * 100)) + '%';
+ progress.appendChild(fill);
+
+ const grid = document.createElement('div');
+ grid.className = 'quality-checks';
+
+ for (const [key, value] of Object.entries(checks)) {
+  const item = document.createElement('div');
+  item.className = 'quality-check ' +
+    (value === true ? 'quality-pass' : 'quality-fail');
+
+  const label = key.replaceAll('_', ' ');
+  item.textContent =
+    (value === true ? 'PASS — ' : 'REVIEW — ') + label;
+
+  grid.appendChild(item);
+ }
+
+ const note = document.createElement('p');
+ note.className = 'quality-note';
+ note.textContent =
+  'Deterministic synthetic report validation only. ' +
+  'Passing does not establish causal accuracy or authorize actions.';
+
+ container.append(title, score, status, progress, grid, note);
+}
+
 async function runReportEvaluation(){
  const button = document.getElementById('report-evaluate-run');
  const download = document.getElementById('report-evaluate-download');
  const output = document.getElementById('report-evaluation-output');
+ document.getElementById('quality-scorecard').replaceChildren();
 
  if(!comparisonReport){
   output.textContent =
@@ -749,6 +870,7 @@ async function runReportEvaluation(){
   );
 
   reportEvaluation = result;
+  renderQualityScorecard(result);
   display('report-evaluation-output', result);
   download.disabled = false;
  } catch(e){
