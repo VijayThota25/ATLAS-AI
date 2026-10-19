@@ -508,6 +508,72 @@ pre {
     padding: 14px 0;
 }
 
+
+/* ATLAS_V20_EVIDENCE_CARDS */
+.v20-evidence-grid {
+    display: grid;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.v20-evidence-card {
+    background: linear-gradient(145deg, #172840, #0e1a2c);
+    border: 1px solid #365173;
+    border-radius: 14px;
+    padding: 22px;
+    min-width: 0;
+}
+
+.v20-evidence-card h4 {
+    margin: 0 0 14px;
+    color: #93c5fd;
+    font-size: 17px;
+}
+
+.v20-evidence-card h5 {
+    margin: 18px 0 8px;
+    color: #a9bfd9;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+}
+
+.v20-evidence-card p {
+    margin: 6px 0;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+.v20-evidence-card ul {
+    margin: 6px 0;
+    padding-left: 22px;
+    line-height: 1.7;
+}
+
+.v20-evidence-meta {
+    color: #67e8f9;
+    font-size: 13px;
+}
+
+.v20-evidence-warning {
+    color: #fbbf24;
+    font-size: 13px;
+    margin-top: 16px;
+}
+
+.v20-evidence-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+}
+
+.v20-evidence-metric {
+    background: #101d31;
+    border: 1px solid #2d4565;
+    border-radius: 9px;
+    padding: 12px;
+}
+
 </style></head><body><header><small>LOCAL SIMULATION · NO LIVE PAYMENTS</small><h1>ATLAS AI / Mission Control</h1><p class="note">Synthetic incident detection, explainable investigation, recovery proposals and human approval.</p></header>
 <main><div class="grid"><section class="stat">Incidents recorded<strong id="count">0</strong></section><section class="stat">Critical incidents<strong id="critical">0</strong></section><section class="stat">Pending actions<strong id="pending">0</strong></section></div>
 <section><h2>1. Generate synthetic incident</h2><div class="row"><div><label for="scenario">Scenario</label><select id="scenario"><option value="">Random</option><option value="healthy">Healthy</option><option value="provider_outage">Provider outage</option><option value="latency_spike">Latency spike</option><option value="retry_storm">Retry storm</option></select></div><button onclick="generate()">Generate & investigate</button></div></section>
@@ -667,9 +733,9 @@ No investigation executed yet.
   </div>
 
   <h3>Root-cause hypotheses and report</h3>
-  <pre id="v20-report" aria-live="polite">
+  <div id="v20-report" class="v20-evidence-grid" aria-live="polite">
 No report available.
-  </pre>
+</div>
 </section>
 
 </main>
@@ -1333,6 +1399,127 @@ function renderV20Timeline(stages) {
   }
 }
 
+
+// ATLAS_V20_EVIDENCE_RENDERER
+function renderV20Evidence(report) {
+  const container = document.getElementById('v20-report');
+  container.replaceChildren();
+
+  function element(tag, text, className) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    node.textContent = String(text ?? '');
+    return node;
+  }
+
+  function section(card, heading, values) {
+    card.appendChild(element('h5', heading));
+
+    if (!Array.isArray(values) || values.length === 0) {
+      card.appendChild(element('p', 'None reported.'));
+      return;
+    }
+
+    const list = document.createElement('ul');
+
+    for (const value of values) {
+      list.appendChild(element('li', value));
+    }
+
+    card.appendChild(list);
+  }
+
+  function scenarioCard(title, incident, rca) {
+    const card = document.createElement('div');
+    card.className = 'v20-evidence-card';
+
+    card.appendChild(element('h4', title));
+    card.appendChild(element(
+      'p',
+      'Scenario: ' + incident.scenario +
+      ' | Severity: ' + incident.severity,
+      'v20-evidence-meta'
+    ));
+
+    card.appendChild(element('h5', 'Primary Hypothesis'));
+    card.appendChild(element('p', rca.primary_hypothesis));
+
+    card.appendChild(element(
+      'p',
+      'Confidence: ' + rca.confidence,
+      'v20-evidence-warning'
+    ));
+
+    section(
+      card,
+      'Supporting Evidence',
+      (rca.supporting_evidence || []).map(
+        item => item.display
+      )
+    );
+
+    section(card, 'Triggered Rules', rca.triggered_rules);
+    section(card, 'Alternative Explanations',
+      rca.alternative_explanations);
+    section(card, 'Missing Evidence', rca.missing_evidence);
+    section(card, 'Investigation Steps', rca.investigation_steps);
+
+    card.appendChild(element(
+      'p',
+      rca.limitations,
+      'v20-evidence-warning'
+    ));
+
+    return card;
+  }
+
+  container.appendChild(
+    scenarioCard('Scenario A', report.incident_a, report.root_cause_a)
+  );
+
+  container.appendChild(
+    scenarioCard('Scenario B', report.incident_b, report.root_cause_b)
+  );
+
+  const comparison = document.createElement('div');
+  comparison.className = 'v20-evidence-card';
+
+  comparison.appendChild(element('h4', 'Comparison: B - A'));
+
+  const metrics = document.createElement('div');
+  metrics.className = 'v20-evidence-metrics';
+
+  const differences = report.differences_b_minus_a || {};
+
+  const entries = [
+    ['Success Rate Change',
+      differences.success_rate_percentage_points, ' percentage points'],
+    ['Latency Change', differences.latency_ms, ' ms'],
+    ['Failed Transactions Change',
+      differences.failed_transactions, '']
+  ];
+
+  for (const [label, value, unit] of entries) {
+    const metric = document.createElement('div');
+    metric.className = 'v20-evidence-metric';
+
+    metric.appendChild(element('h5', label));
+    metric.appendChild(element('p', String(value) + unit));
+
+    metrics.appendChild(metric);
+  }
+
+  comparison.appendChild(metrics);
+
+  comparison.appendChild(element(
+    'p',
+    report.limitations,
+    'v20-evidence-warning'
+  ));
+
+  container.appendChild(comparison);
+}
+
 // ATLAS_V20_INVESTIGATION_JS
 async function runV20Investigation(){
   const button = document.getElementById('v20-run');
@@ -1415,15 +1602,7 @@ async function runV20Investigation(){
     }
 
     renderV20Timeline(result.stages);
-    display('v20-report', {
-      incident_a: result.report.incident_a,
-      incident_b: result.report.incident_b,
-      differences_b_minus_a: result.report.differences_b_minus_a,
-      root_cause_a: result.report.root_cause_a,
-      root_cause_b: result.report.root_cause_b,
-      evaluation: result.evaluation,
-      limitations: result.limitations
-    });
+    renderV20Evidence(result.report);
 
   } catch(error) {
     summary.className = 'quality-scorecard';
