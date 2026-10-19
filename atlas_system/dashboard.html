@@ -245,6 +245,39 @@ pre {
   .comparison-cards {grid-template-columns:1fr}
 }
 
+
+/* ATLAS_V19_DELTA_PANEL */
+.comparison-deltas {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:14px;
+  margin:16px 0;
+}
+.delta-card {
+  background:#14243b;
+  border:1px solid #304764;
+  border-radius:14px;
+  padding:20px;
+}
+.delta-card .delta-label {
+  color:#b9c9dd;
+  font-size:13px;
+}
+.delta-card .delta-value {
+  color:#67e8f9;
+  font-size:26px;
+  font-weight:800;
+  margin-top:10px;
+}
+.delta-note {
+  grid-column:1/-1;
+  color:#aebfd8;
+  font-size:13px;
+}
+@media(max-width:700px) {
+  .comparison-deltas {grid-template-columns:1fr}
+}
+
 </style></head><body><header><small>LOCAL SIMULATION · NO LIVE PAYMENTS</small><h1>ATLAS AI / Mission Control</h1><p class="note">Synthetic incident detection, explainable investigation, recovery proposals and human approval.</p></header>
 <main><div class="grid"><section class="stat">Incidents recorded<strong id="count">0</strong></section><section class="stat">Critical incidents<strong id="critical">0</strong></section><section class="stat">Pending actions<strong id="pending">0</strong></section></div>
 <section><h2>1. Generate synthetic incident</h2><div class="row"><div><label for="scenario">Scenario</label><select id="scenario"><option value="">Random</option><option value="healthy">Healthy</option><option value="provider_outage">Provider outage</option><option value="latency_spike">Latency spike</option><option value="retry_storm">Retry storm</option></select></div><button onclick="generate()">Generate & investigate</button></div></section>
@@ -304,6 +337,8 @@ pre {
 </div>
 <!-- ATLAS_V19_COMPARISON_CARDS -->
 <div id="comparison-cards" class="comparison-cards" aria-live="polite"></div>
+<!-- ATLAS_V19_DELTA_PANEL -->
+<div id="comparison-deltas" class="comparison-deltas" aria-live="polite"></div>
 <pre id="comparison-output" aria-live="polite">Select two scenarios and click Compare incidents.</pre>
 </section>
 
@@ -542,6 +577,7 @@ async function runRootCause(){
 // ATLAS_V14_WORKBENCH
 let comparisonReport = null;
  document.getElementById('comparison-cards').replaceChildren();
+ document.getElementById('comparison-deltas').replaceChildren();
 
 
 // ATLAS_V19_RENDER_COMPARISON
@@ -590,6 +626,54 @@ function renderComparisonCards(report) {
  }
 }
 
+
+// ATLAS_V19_RENDER_DELTAS
+function renderComparisonDeltas(report) {
+ const container = document.getElementById('comparison-deltas');
+ if (!container) return;
+ container.replaceChildren();
+
+ const differences = report.differences_b_minus_a;
+ if (!differences || typeof differences !== 'object') return;
+
+ const items = [
+  ['Success rate change', 'success_rate_percentage_points', ' pp'],
+  ['Latency change', 'latency_ms', ' ms'],
+  ['Failed transactions change', 'failed_transactions', '']
+ ];
+
+ for (const [label, key, unit] of items) {
+  const card = document.createElement('article');
+  card.className = 'delta-card';
+
+  const heading = document.createElement('div');
+  heading.className = 'delta-label';
+  heading.textContent = label;
+
+  const value = document.createElement('div');
+  value.className = 'delta-value';
+
+  const number = Number(differences[key]);
+  value.textContent = differences[key] == null ||
+    !Number.isFinite(number)
+    ? 'N/A'
+    : (number > 0 ? '+' : '') +
+      number.toLocaleString('en-US', {
+       maximumFractionDigits: 2
+      }) + unit;
+
+  card.append(heading, value);
+  container.appendChild(card);
+ }
+
+ const note = document.createElement('p');
+ note.className = 'delta-note';
+ note.textContent =
+  'Difference = Incident B minus Incident A. ' +
+  'Synthetic comparison only; not a measured recovery outcome.';
+ container.appendChild(note);
+}
+
 async function runComparison(){
  const button = document.getElementById('compare-run');
  const download = document.getElementById('compare-download');
@@ -611,6 +695,7 @@ async function runComparison(){
 
   comparisonReport = result;
   renderComparisonCards(result);
+  renderComparisonDeltas(result);
   display('comparison-output', result);
   download.disabled = false;
  } catch(e) {
