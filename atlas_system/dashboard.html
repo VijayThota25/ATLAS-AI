@@ -391,6 +391,58 @@ pre {
   .archive-summary-grid {grid-template-columns:1fr}
 }
 
+
+/* ATLAS_V20_STATUS_CARDS */
+.v20-status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin: 20px 0;
+}
+
+.v20-status-card {
+    background: linear-gradient(145deg, #192b46, #101d31);
+    border: 1px solid #365173;
+    border-radius: 14px;
+    padding: 20px;
+    min-width: 0;
+}
+
+.v20-status-label {
+    color: #9bb4d2;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.v20-status-value {
+    display: block;
+    color: #eef6ff;
+    font-size: 21px;
+    font-weight: 750;
+    margin: 12px 0 6px;
+    overflow-wrap: anywhere;
+}
+
+.v20-status-detail {
+    color: #a9bfd9;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.v20-status-card.is-success {
+    border-color: #237c76;
+}
+
+.v20-status-card.is-success .v20-status-value {
+    color: #67e8c3;
+}
+
+.v20-status-card.is-warning {
+    border-color: #a87b36;
+}
+
 </style></head><body><header><small>LOCAL SIMULATION · NO LIVE PAYMENTS</small><h1>ATLAS AI / Mission Control</h1><p class="note">Synthetic incident detection, explainable investigation, recovery proposals and human approval.</p></header>
 <main><div class="grid"><section class="stat">Incidents recorded<strong id="count">0</strong></section><section class="stat">Critical incidents<strong id="critical">0</strong></section><section class="stat">Pending actions<strong id="pending">0</strong></section></div>
 <section><h2>1. Generate synthetic incident</h2><div class="row"><div><label for="scenario">Scenario</label><select id="scenario"><option value="">Random</option><option value="healthy">Healthy</option><option value="provider_outage">Provider outage</option><option value="latency_spike">Latency spike</option><option value="retry_storm">Retry storm</option></select></div><button onclick="generate()">Generate & investigate</button></div></section>
@@ -1170,6 +1222,7 @@ async function runV20Investigation(){
   const report = document.getElementById('v20-report');
 
   button.disabled = true;
+  summary.className = 'quality-scorecard';
   summary.textContent = 'Running synthetic investigation...';
   stages.textContent = 'Waiting for execution results...';
   report.textContent = 'Waiting for report...';
@@ -1185,15 +1238,62 @@ async function runV20Investigation(){
       stage => stage.status === 'COMPLETED'
     ).length;
 
-    summary.textContent =
-      'Investigation: ' + result.status + '\n' +
-      'Quality checks: ' + evaluation.passed_checks +
-      '/' + evaluation.total_checks + ' (' + evaluation.status + ')\n' +
-      'Stages completed: ' + completed +
-      '/' + (result.stages || []).length + '\n' +
-      'Human approval required: ' + result.requires_human_approval + '\n' +
-      'Action executed: ' + result.action_executed + '\n' +
-      'Data persisted: ' + result.data_persisted;
+    const cards = [
+      {
+        label: 'Investigation',
+        value: result.status === 'READY_FOR_HUMAN_REVIEW'
+          ? 'Ready for Review' : result.status,
+        detail: 'Synthetic investigation status',
+        tone: result.status === 'READY_FOR_HUMAN_REVIEW'
+          ? 'is-success' : 'is-warning'
+      },
+      {
+        label: 'Quality Score',
+        value: evaluation.passed_checks + '/' + evaluation.total_checks,
+        detail: evaluation.status + ' - deterministic checks',
+        tone: evaluation.status === 'PASS'
+          ? 'is-success' : 'is-warning'
+      },
+      {
+        label: 'Human Approval',
+        value: result.requires_human_approval ? 'Required' : 'Not required',
+        detail: 'Manual review before any action',
+        tone: result.requires_human_approval
+          ? 'is-warning' : ''
+      },
+      {
+        label: 'Execution Safety',
+        value: !result.action_executed && !result.data_persisted
+          ? 'Read-only' : 'Review required',
+        detail: 'Action executed: ' + result.action_executed +
+          ' | Data saved: ' + result.data_persisted,
+        tone: !result.action_executed && !result.data_persisted
+          ? 'is-success' : 'is-warning'
+      }
+    ];
+
+    summary.replaceChildren();
+    summary.className = 'v20-status-grid';
+
+    for (const item of cards) {
+      const card = document.createElement('div');
+      card.className = 'v20-status-card ' + item.tone;
+
+      const label = document.createElement('div');
+      label.className = 'v20-status-label';
+      label.textContent = item.label;
+
+      const value = document.createElement('div');
+      value.className = 'v20-status-value';
+      value.textContent = item.value;
+
+      const detail = document.createElement('div');
+      detail.className = 'v20-status-detail';
+      detail.textContent = item.detail;
+
+      card.append(label, value, detail);
+      summary.appendChild(card);
+    }
 
     display('v20-stages', result.stages);
     display('v20-report', {
@@ -1207,6 +1307,7 @@ async function runV20Investigation(){
     });
 
   } catch(error) {
+    summary.className = 'quality-scorecard';
     summary.textContent = 'Investigation failed: ' + error.message;
     stages.textContent = 'No completed investigation.';
     report.textContent = 'No report available.';
