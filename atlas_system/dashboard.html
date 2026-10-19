@@ -32,6 +32,140 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#091321;border-radius
 .analytics-chart svg{width:100%;height:auto;max-height:290px}
 .analytics-chart h3{font-size:15px;margin:0 0 8px;color:#93c5fd}
 
+
+/* ATLAS_V19_MISSION_CONTROL */
+:root {
+    color-scheme: dark;
+    font-family: Inter, "Segoe UI", Arial, sans-serif;
+    background: #080d18;
+    color: #eaf1ff;
+}
+
+body {
+    background:
+        radial-gradient(ellipse at 85% 0%, #162b49 0%, transparent 38%),
+        #080d18;
+    min-height: 100vh;
+}
+
+header {
+    background: linear-gradient(120deg, #111f36, #0c1526);
+    border-bottom: 1px solid #304563;
+    padding: 42px max(24px, 7vw);
+}
+
+header h1 {
+    font-size: clamp(30px, 4vw, 48px);
+    letter-spacing: -0.035em;
+}
+
+header small {
+    color: #67e8f9;
+    font-weight: 700;
+}
+
+main {
+    max-width: 1440px;
+    padding: 32px 24px;
+}
+
+section {
+    background: rgba(17, 28, 47, 0.94);
+    border: 1px solid #2b3d59;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.14);
+    transition: border-color 0.2s ease;
+}
+
+section:hover {
+    border-color: #42648c;
+}
+
+section h2 {
+    color: #f1f6ff;
+    font-size: 20px;
+    margin-top: 0;
+}
+
+.stat, .analytics-stat, .ai-panel {
+    background: #17273e;
+    border: 1px solid #304764;
+    border-radius: 12px;
+}
+
+button {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    border: 1px solid #3976ed;
+    border-radius: 9px;
+    font-weight: 600;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+button:hover:not(:disabled) {
+    background: #3478f6;
+    transform: translateY(-1px);
+}
+
+button:focus-visible, select:focus-visible {
+    outline: 2px solid #67e8f9;
+    outline-offset: 3px;
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
+select {
+    background: #1b2d47;
+    border: 1px solid #456083;
+}
+
+pre {
+    background: #080f1d;
+    border: 1px solid #243751;
+    border-radius: 10px;
+    line-height: 1.6;
+}
+
+.note {
+    color: #b7c7de;
+    line-height: 1.6;
+}
+
+@media (max-width: 700px) {
+    header {
+        padding: 28px 18px;
+    }
+
+    main {
+        padding: 18px 12px;
+    }
+
+    section {
+        padding: 18px;
+    }
+
+    .row > * {
+        max-width: 100%;
+    }
+
+    button {
+        min-height: 44px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    button, section {
+        transition: none;
+    }
+
+    button:hover:not(:disabled) {
+        transform: none;
+    }
+}
+
 </style></head><body><header><small>LOCAL SIMULATION · NO LIVE PAYMENTS</small><h1>ATLAS AI / Mission Control</h1><p class="note">Synthetic incident detection, explainable investigation, recovery proposals and human approval.</p></header>
 <main><div class="grid"><section class="stat">Incidents recorded<strong id="count">0</strong></section><section class="stat">Critical incidents<strong id="critical">0</strong></section><section class="stat">Pending actions<strong id="pending">0</strong></section></div>
 <section><h2>1. Generate synthetic incident</h2><div class="row"><div><label for="scenario">Scenario</label><select id="scenario"><option value="">Random</option><option value="healthy">Healthy</option><option value="provider_outage">Provider outage</option><option value="latency_spike">Latency spike</option><option value="retry_storm">Retry storm</option></select></div><button onclick="generate()">Generate & investigate</button></div></section>
