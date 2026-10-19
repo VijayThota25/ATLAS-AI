@@ -335,6 +335,62 @@ pre {
   .quality-checks {grid-template-columns:1fr}
 }
 
+
+/* ATLAS_V19_ARCHIVE_SUMMARY */
+.archive-summary:empty {display:none}
+.archive-summary {
+  background:#17273e;
+  border:1px solid #304764;
+  border-radius:14px;
+  padding:22px;
+  margin:18px 0;
+  overflow-wrap:anywhere;
+}
+.archive-summary-header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.archive-summary h3 {margin:0 0 8px}
+.archive-summary-status {
+  display:inline-block;
+  padding:6px 12px;
+  border-radius:20px;
+  background:#304764;
+  font-size:12px;
+  font-weight:700;
+}
+.archive-summary-grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:16px;
+  margin-top:20px;
+}
+.archive-summary-item {
+  padding:14px;
+  border:1px solid #304764;
+  border-radius:10px;
+}
+.archive-summary-label {
+  color:#aebfd8;
+  font-size:12px;
+  margin-bottom:6px;
+}
+.archive-summary-value {
+  font-weight:600;
+  overflow-wrap:anywhere;
+}
+.archive-summary-note {
+  color:#aebfd8;
+  font-size:13px;
+  margin-top:18px;
+}
+@media(max-width:700px) {
+  .archive-summary-grid {grid-template-columns:1fr}
+}
+
 </style></head><body><header><small>LOCAL SIMULATION · NO LIVE PAYMENTS</small><h1>ATLAS AI / Mission Control</h1><p class="note">Synthetic incident detection, explainable investigation, recovery proposals and human approval.</p></header>
 <main><div class="grid"><section class="stat">Incidents recorded<strong id="count">0</strong></section><section class="stat">Critical incidents<strong id="critical">0</strong></section><section class="stat">Pending actions<strong id="pending">0</strong></section></div>
 <section><h2>1. Generate synthetic incident</h2><div class="row"><div><label for="scenario">Scenario</label><select id="scenario"><option value="">Random</option><option value="healthy">Healthy</option><option value="provider_outage">Provider outage</option><option value="latency_spike">Latency spike</option><option value="retry_storm">Retry storm</option></select></div><button onclick="generate()">Generate & investigate</button></div></section>
@@ -441,6 +497,8 @@ Compare two synthetic incidents first, then evaluate the report.
 <button id="archive-view" onclick="viewInvestigation()">View saved report</button>
 <button id="archive-download" onclick="downloadInvestigation()" disabled>Download archived JSON</button>
 </div>
+<!-- ATLAS_V19_ARCHIVE_SUMMARY -->
+<div id="archive-summary" class="archive-summary" aria-live="polite"></div>
 <pre id="archive-output" aria-live="polite">Select an investigation and click View saved report.</pre>
 </section>
 
@@ -927,6 +985,7 @@ async function saveInvestigation(){
 }
 
 async function refreshInvestigationHistory(selectId, preserveStatus=false){
+ document.getElementById('archive-summary').replaceChildren();
  const select = document.getElementById('archive-select');
  const status = document.getElementById('archive-status');
  archivedInvestigation = null;
@@ -951,8 +1010,71 @@ async function refreshInvestigationHistory(selectId, preserveStatus=false){
  } catch(e){ status.textContent = 'Archive loading failed: ' + e.message; }
 }
 
+
+// ATLAS_V19_RENDER_ARCHIVE_SUMMARY
+function renderArchiveSummary(record) {
+ const container = document.getElementById('archive-summary');
+ if (!container) return;
+ container.replaceChildren();
+
+ const header = document.createElement('div');
+ header.className = 'archive-summary-header';
+
+ const heading = document.createElement('h3');
+ heading.textContent =
+  String(record.scenario_a || 'Unknown').replaceAll('_', ' ') +
+  ' vs ' +
+  String(record.scenario_b || 'Unknown').replaceAll('_', ' ');
+
+ const status = document.createElement('span');
+ status.className = 'archive-summary-status';
+ status.textContent =
+  'Evaluation: ' + String(record.evaluation_status || 'UNKNOWN');
+
+ header.append(heading, status);
+
+ const grid = document.createElement('div');
+ grid.className = 'archive-summary-grid';
+
+ const fields = [
+  ['Report ID', record.report_id],
+  ['Saved at', record.created_at],
+  ['Storage', record.data_persisted === true
+    ? 'Persisted locally' : 'Not confirmed'],
+  ['Recovery actions', record.action_executed === false
+    ? 'Not executed' : 'Review required']
+ ];
+
+ for (const [label, value] of fields) {
+  const item = document.createElement('div');
+  item.className = 'archive-summary-item';
+
+  const name = document.createElement('div');
+  name.className = 'archive-summary-label';
+  name.textContent = label;
+
+  const detail = document.createElement('div');
+  detail.className = 'archive-summary-value';
+  detail.textContent = String(value ?? 'N/A');
+
+  item.append(name, detail);
+  grid.appendChild(item);
+ }
+
+ const note = document.createElement('p');
+ note.className = 'archive-summary-note';
+ note.textContent =
+  'Synthetic investigation stored locally. ' +
+  'Archive retrieval performs checksum validation when a digest exists. ' +
+  'Legacy records may not have a checksum. ' +
+  'This view does not establish causal accuracy.';
+
+ container.append(header, grid, note);
+}
+
 async function viewInvestigation(){
  const id = document.getElementById('archive-select').value;
+ document.getElementById('archive-summary').replaceChildren();
  const output = document.getElementById('archive-output');
  const download = document.getElementById('archive-download');
  archivedInvestigation = null;
@@ -962,6 +1084,7 @@ async function viewInvestigation(){
   const record = await api('/api/investigations/' + encodeURIComponent(id));
   if(document.getElementById('archive-select').value !== id) return;
   archivedInvestigation = record;
+  renderArchiveSummary(record);
   display('archive-output', record);
   download.disabled = false;
  } catch(e){ output.textContent = 'Retrieval failed: ' + e.message; }
@@ -981,6 +1104,7 @@ function downloadInvestigation(){
 }
 
 document.getElementById('archive-select').addEventListener('change', () => {
+ document.getElementById('archive-summary').replaceChildren();
  archivedInvestigation = null;
  document.getElementById('archive-download').disabled = true;
  document.getElementById('archive-output').textContent = 'Selection changed. Click View saved report.';
