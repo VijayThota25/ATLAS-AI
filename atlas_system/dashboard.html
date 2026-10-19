@@ -166,6 +166,45 @@ pre {
     }
 }
 
+
+/* ATLAS_V19_WORKFLOW_GUIDE */
+.investigation-steps {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+}
+.investigation-step {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 20px;
+    background: #17273e;
+    border: 1px solid #304764;
+    border-radius: 14px;
+}
+.step-number {
+    font-size: 23px;
+    font-weight: 800;
+    color: #67e8f9;
+}
+.investigation-step b {
+    display: block;
+    font-size: 14px;
+    letter-spacing: .08em;
+}
+.investigation-step small {
+    display: block;
+    margin-top: 5px;
+    letter-spacing: 0;
+    color: #aebfd8;
+}
+@media (max-width: 700px) {
+    .investigation-steps {
+        grid-template-columns: 1fr;
+    }
+}
+
 </style></head><body><header><small>LOCAL SIMULATION · NO LIVE PAYMENTS</small><h1>ATLAS AI / Mission Control</h1><p class="note">Synthetic incident detection, explainable investigation, recovery proposals and human approval.</p></header>
 <main><div class="grid"><section class="stat">Incidents recorded<strong id="count">0</strong></section><section class="stat">Critical incidents<strong id="critical">0</strong></section><section class="stat">Pending actions<strong id="pending">0</strong></section></div>
 <section><h2>1. Generate synthetic incident</h2><div class="row"><div><label for="scenario">Scenario</label><select id="scenario"><option value="">Random</option><option value="healthy">Healthy</option><option value="provider_outage">Provider outage</option><option value="latency_spike">Latency spike</option><option value="retry_storm">Retry storm</option></select></div><button onclick="generate()">Generate & investigate</button></div></section>
@@ -183,6 +222,21 @@ pre {
 <section id="root-cause-section"><h2>11. Explainable root cause analysis (v1.3)</h2><p class="note">Deterministic hypotheses from fixed synthetic metrics. No causal proof, real payment access, live LLM, or recovery execution.</p><div class="row"><div><label for="rca-scenario">Synthetic scenario</label><select id="rca-scenario"><option value="provider_outage">Provider outage</option><option value="healthy">Healthy</option><option value="latency_spike">Latency spike</option><option value="retry_storm">Retry storm</option></select></div><button id="rca-run" onclick="runRootCause()">Analyze synthetic incident</button></div><pre id="rca-output" aria-live="polite">Choose a scenario and click Analyze synthetic incident.</pre></section>
 
 <!-- ATLAS_V14_WORKBENCH -->
+<!-- ATLAS_V19_WORKFLOW_GUIDE -->
+<div class="investigation-steps" aria-label="Investigation workflow">
+  <div class="investigation-step">
+    <span class="step-number">01</span>
+    <div><b>COMPARE</b><small>Synthetic incidents</small></div>
+  </div>
+  <div class="investigation-step">
+    <span class="step-number">02</span>
+    <div><b>EVALUATE</b><small>Seven quality checks</small></div>
+  </div>
+  <div class="investigation-step">
+    <span class="step-number">03</span>
+    <div><b>ARCHIVE</b><small>Local investigation record</small></div>
+  </div>
+</div>
 <section id="comparison-section">
 <h2>12. Incident Investigation Workbench (v1.4)</h2>
 <p class="note">Compare fixed synthetic scenarios. Read-only investigation; no real payments or recovery execution.</p>
